@@ -4,6 +4,7 @@ import { shaderMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import { LEVEL_DATA } from '../levelData';
 import { Dog } from './Dog';
+import { Bear } from './Bear';
 
 const WaterMaterial = shaderMaterial(
   { uTime: 0, uColorStart: new THREE.Color('#3366ff'), uColorEnd: new THREE.Color('#00ccff') },
@@ -157,9 +158,29 @@ const ConnectedDog = ({ id }) => {
 
 import { memo } from 'react';
 
+const ConnectedBear = ({ id }) => {
+    const bear = useStore((state) => state.bears[id], (a, b) => JSON.stringify(a) === JSON.stringify(b));
+
+    if (!bear) return null;
+
+    return (
+        <Bear 
+            key={bear.id} 
+            id={bear.id}
+            position={[bear.position.x, bear.position.y, bear.position.z]} 
+            rotation={bear.rotation} 
+            hp={bear.hp}
+            maxHp={bear.maxHp}
+            state={bear.state}
+            wanderTarget={bear.wanderTarget}
+        />
+    );
+};
+
 export const MapAssets = memo(() => {
   // Select only IDs, stable with useShallow
   const dogIds = useStore(useShallow((state) => Object.keys(state.dogs)));
+  const bearIds = useStore(useShallow((state) => Object.keys(state.bears)));
 
   return (
     <group>
@@ -171,6 +192,9 @@ export const MapAssets = memo(() => {
       ))}
       {dogIds.map(id => (
           <ConnectedDog key={id} id={id} />
+      ))}
+      {bearIds.map(id => (
+          <ConnectedBear key={id} id={id} />
       ))}
       <RiverMesh />
     </group>

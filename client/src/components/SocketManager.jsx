@@ -20,6 +20,10 @@ export const SocketManager = () => {
   const addItem = useStore((state) => state.addItem);
   const removeItem = useStore((state) => state.removeItem);
   const addToInventory = useStore((state) => state.addToInventory);
+  const setBears = useStore((state) => state.setBears);
+  const updateBear = useStore((state) => state.updateBear);
+  const updateBears = useStore((state) => state.updateBears);
+  const removeBear = useStore((state) => state.removeBear);
   const setTrader = useStore((state) => state.setTrader);
 
   useEffect(() => {
@@ -38,6 +42,10 @@ export const SocketManager = () => {
     
     function onCurrentDogs(dogs) {
         setDogs(dogs);
+    }
+
+    function onCurrentBears(bears) {
+        setBears(bears);
     }
 
     function onCurrentItems(items) {
@@ -74,6 +82,18 @@ export const SocketManager = () => {
     function onDogKilled(id) {
         removeDog(id);
     }
+
+    function onBearUpdate(bear) {
+        updateBear(bear);
+    }
+
+    function onBearsMoved(bears) {
+        updateBears(bears);
+    }
+
+    function onBearKilled(id) {
+        removeBear(id);
+    }
     
     function onItemDropped(item) {
         addItem(item);
@@ -90,6 +110,11 @@ export const SocketManager = () => {
 
     function onDogBark() {
         soundManager.playBarkSound();
+    }
+
+    function onBearBark() {
+        // soundManager.playBearRoar(); // TODO: Add roar sound
+        soundManager.playBarkSound(); // Fallback
     }
     
     function onDogDamage(dogId) {
@@ -113,6 +138,10 @@ export const SocketManager = () => {
              soundManager.playDogYelp();
         }
     }
+
+    function onBearDamage(bearId) {
+         soundManager.playDogYelp(); // Fallback
+    }
     
     function onTraderUpdate(traderData) {
         setTrader(traderData);
@@ -131,6 +160,7 @@ export const SocketManager = () => {
     socket.on('disconnect', onDisconnect);
     socket.on('currentPlayers', onCurrentPlayers);
     socket.on('currentDogs', onCurrentDogs);
+    socket.on('currentBears', onCurrentBears);
     socket.on('currentItems', onCurrentItems);
     socket.on('newPlayer', onNewPlayer);
     socket.on('playerMoved', onPlayerMoved);
@@ -139,11 +169,16 @@ export const SocketManager = () => {
     socket.on('dogUpdate', onDogUpdate);
     socket.on('dogsMoved', onDogsMoved);
     socket.on('dogKilled', onDogKilled);
+    socket.on('bearUpdate', onBearUpdate);
+    socket.on('bearsMoved', onBearsMoved);
+    socket.on('bearKilled', onBearKilled);
     socket.on('itemDropped', onItemDropped);
     socket.on('itemRemoved', onItemRemoved);
     socket.on('inventoryAdd', onInventoryAdd);
     socket.on('dogBark', onDogBark);
     socket.on('dogDamage', onDogDamage);
+    socket.on('bearBark', onBearBark);
+    socket.on('bearDamage', onBearDamage);
     socket.on('traderUpdate', onTraderUpdate);
     socket.on('playerUpdate', onPlayerUpdate);
     socket.on('playerRespawn', onPlayerRespawn);
@@ -153,6 +188,7 @@ export const SocketManager = () => {
       socket.off('disconnect', onDisconnect);
       socket.off('currentPlayers', onCurrentPlayers);
       socket.off('currentDogs', onCurrentDogs);
+      socket.off('currentBears', onCurrentBears);
       socket.off('currentItems', onCurrentItems);
       socket.off('newPlayer', onNewPlayer);
       socket.off('playerMoved', onPlayerMoved);
@@ -161,11 +197,16 @@ export const SocketManager = () => {
       socket.off('dogUpdate', onDogUpdate);
       socket.off('dogsMoved', onDogsMoved);
       socket.off('dogKilled', onDogKilled);
+      socket.off('bearUpdate', onBearUpdate);
+      socket.off('bearsMoved', onBearsMoved);
+      socket.off('bearKilled', onBearKilled);
       socket.off('itemDropped', onItemDropped);
       socket.off('itemRemoved', onItemRemoved);
       socket.off('inventoryAdd', onInventoryAdd);
       socket.off('dogBark', onDogBark);
       socket.off('dogDamage', onDogDamage);
+      socket.off('bearBark', onBearBark);
+      socket.off('bearDamage', onBearDamage);
       socket.off('traderUpdate', onTraderUpdate);
       socket.off('playerUpdate', onPlayerUpdate);
       socket.off('playerRespawn', onPlayerRespawn);
