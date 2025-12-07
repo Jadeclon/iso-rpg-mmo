@@ -21,6 +21,17 @@ const players = {};
 const dogs = {};
 const droppedItems = {};
 const itemsDef = require('../client/src/items.json');
+let trader = {
+    id: 'trader-1',
+    position: { x: (Math.random() * 40) - 20, z: (Math.random() * 40) - 20 }, // Random spawn
+    anchorPosition: null, // Set after init
+    width: 1, // Collision size
+    rotation: [0, 0, 0],
+    items: ['potion', 'sword'],
+    wanderTarget: null,
+    nextWanderTime: Date.now() + 5000
+};
+trader.anchorPosition = { ...trader.position };
 
 // Initialize Dogs (Server Logic replicated from levelData.js)
 const initDogs = () => {
@@ -180,6 +191,40 @@ setInterval(() => {
     if (hasUpdates) {
         io.emit('dogsMoved', dogs);
     }
+    
+    // Trader Logic
+    if (trader) {
+        let traderUpdated = false;
+        if (trader.wanderTarget) {
+             const dx = trader.wanderTarget.x - trader.position.x;
+             const dz = trader.wanderTarget.z - trader.position.z;
+             const dist = Math.sqrt(dx*dx + dz*dz);
+             
+             if (dist < 0.1) {
+                 trader.wanderTarget = null;
+                 trader.nextWanderTime = now + 4000 + Math.random() * 4000;
+                 traderUpdated = true;
+             } else {
+                 const speed = 0.08; // Leisurely pace
+                 trader.position.x += (dx / dist) * speed;
+                 trader.position.z += (dz / dist) * speed;
+                 trader.rotation[1] = Math.atan2(dx, dz);
+                 traderUpdated = true;
+             }
+        } else if (now > trader.nextWanderTime) {
+             const radius = 3;
+             const angle = Math.random() * Math.PI * 2;
+             const dist = Math.random() * radius;
+             trader.wanderTarget = {
+                 x: trader.anchorPosition.x + Math.sin(angle) * dist,
+                 z: trader.anchorPosition.z + Math.cos(angle) * dist
+             };
+        }
+        
+        if (traderUpdated) {
+            io.emit('traderUpdate', trader);
+        }
+    }
 }, 100); // 10 ticks per second
 
 io.on('connection', (socket) => {
@@ -198,6 +243,7 @@ io.on('connection', (socket) => {
   socket.emit('currentPlayers', players);
   socket.emit('currentDogs', dogs);
   socket.emit('currentItems', droppedItems);
+  socket.emit('traderUpdate', trader);
 
   // Broadcast new player to others
   socket.broadcast.emit('newPlayer', players[socket.id]);
