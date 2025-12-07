@@ -55,6 +55,55 @@ class SoundManager {
         noise.start(t);
         noise.stop(t + 0.3);
     }
+
+    playChatSound() {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+
+        const t = this.ctx.currentTime;
+        const oscillator = this.ctx.createOscillator();
+        const gainNode = this.ctx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(800, t);
+        oscillator.frequency.exponentialRampToValueAtTime(400, t + 0.1);
+
+        gainNode.gain.setValueAtTime(0.3, t);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.ctx.destination);
+
+        oscillator.start(t);
+        oscillator.stop(t + 0.1);
+    }
+
+    playJoinSound() {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+
+        const t = this.ctx.currentTime;
+        const oscillator = this.ctx.createOscillator();
+        const gainNode = this.ctx.createGain();
+
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(300, t);
+        oscillator.frequency.linearRampToValueAtTime(600, t + 0.2);
+
+        gainNode.gain.setValueAtTime(0, t);
+        gainNode.gain.linearRampToValueAtTime(0.3, t + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0, t + 0.2);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.ctx.destination);
+
+        oscillator.start(t);
+        oscillator.stop(t + 0.2);
+    }
 }
 
 export const soundManager = new SoundManager();

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { useStore } from '../store';
+import { soundManager } from '../SoundManager';
 
 const URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3002';
 
@@ -27,6 +28,7 @@ export const SocketManager = () => {
 
     function onNewPlayer(player) {
       addPlayer(player.id, player);
+      soundManager.playJoinSound();
     }
 
     function onPlayerMoved({ id, position }) {
@@ -40,6 +42,7 @@ export const SocketManager = () => {
     
     function onChatMessage(message) {
         useStore.getState().addChatMessage(message);
+        soundManager.playChatSound();
     }
 
     socket.on('connect', onConnect);
