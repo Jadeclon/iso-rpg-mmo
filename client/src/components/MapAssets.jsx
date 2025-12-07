@@ -121,6 +121,7 @@ const RealisticRock = ({ position, scale, rotation }) => {
     );
 }
 
+import { useShallow } from 'zustand/react/shallow';
 import { useStore } from '../store';
 
 // ... (previous imports)
@@ -133,8 +134,32 @@ import { useStore } from '../store';
 
 // ... (RealisticRock implementation)
 
-export const MapAssets = () => {
-  const dogs = useStore((state) => state.dogs);
+const ConnectedDog = ({ id }) => {
+    // Custom equality function: compare JSON string of the object
+    // This handles the server sending fresh object references for identical data
+    const dog = useStore((state) => state.dogs[id], (a, b) => JSON.stringify(a) === JSON.stringify(b));
+
+    if (!dog) return null;
+
+    return (
+        <Dog 
+            key={dog.id} 
+            id={dog.id}
+            position={[dog.position.x, dog.position.y, dog.position.z]} 
+            rotation={dog.rotation} 
+            hp={dog.hp}
+            maxHp={dog.maxHp}
+            state={dog.state}
+            wanderTarget={dog.wanderTarget}
+        />
+    );
+};
+
+import { memo } from 'react';
+
+export const MapAssets = memo(() => {
+  // Select only IDs, stable with useShallow
+  const dogIds = useStore(useShallow((state) => Object.keys(state.dogs)));
 
   return (
     <group>
@@ -144,19 +169,10 @@ export const MapAssets = () => {
       {LEVEL_DATA.rocks.map(item => (
           <RealisticRock key={item.id} position={item.position} scale={item.scale} rotation={item.rotation} />
       ))}
-      {Object.values(dogs).map(dog => (
-          <Dog 
-            key={dog.id} 
-            id={dog.id}
-            position={[dog.position.x, dog.position.y, dog.position.z]} 
-            rotation={dog.rotation} 
-            hp={dog.hp}
-            maxHp={dog.maxHp}
-            state={dog.state}
-            wanderTarget={dog.wanderTarget}
-          />
+      {dogIds.map(id => (
+          <ConnectedDog key={id} id={id} />
       ))}
       <RiverMesh />
     </group>
   );
-};
+});

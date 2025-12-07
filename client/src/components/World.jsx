@@ -2,8 +2,9 @@ import { MapAssets } from './MapAssets';
 import { useTexture } from '@react-three/drei';
 import { RepeatWrapping } from 'three';
 import { useStore } from '../store';
+import { memo } from 'react';
 
-export const World = () => {
+export const World = memo(() => {
   const showGrid = useStore((state) => state.showGrid);
   const grassTexture = useTexture('/textures/grass.png?v=6');
   grassTexture.wrapS = RepeatWrapping;
@@ -24,4 +25,4 @@ export const World = () => {
       <MapAssets />
     </group>
   );
-};
+});

@@ -28,10 +28,25 @@ export const useStore = create((set) => ({
     return { items: newItems };
   }),
   toggleInventory: () => set((state) => ({ isInventoryOpen: !state.isInventoryOpen })),
-  addToInventory: (item) => set((state) => ({ inventory: [...state.inventory, item] })),
-  removeFromInventory: (index) => set((state) => {
+  addToInventory: (newItem) => set((state) => {
+      const existingItemIndex = state.inventory.findIndex(item => item.itemId === newItem.itemId);
+      if (existingItemIndex > -1) {
+          const newInv = [...state.inventory];
+          newInv[existingItemIndex].count = (newInv[existingItemIndex].count || 1) + 1;
+          return { inventory: newInv };
+      }
+      return { inventory: [...state.inventory, { ...newItem, count: 1 }] };
+  }),
+  removeFromInventory: (itemId) => set((state) => {
+      const existingItemIndex = state.inventory.findIndex(item => item.itemId === itemId);
+      if (existingItemIndex === -1) return {};
+      
       const newInv = [...state.inventory];
-      newInv.splice(index, 1);
+      if (newInv[existingItemIndex].count > 1) {
+          newInv[existingItemIndex].count--;
+      } else {
+          newInv.splice(existingItemIndex, 1);
+      }
       return { inventory: newInv };
   }),
   toggleIsNight: () => set((state) => ({ isNight: !state.isNight })),

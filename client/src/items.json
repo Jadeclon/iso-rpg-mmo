@@ -1,5 +1,8 @@
 [
   { "id": "bone", "name": "Bone", "image": "🦴", "dropRate": 0.5 },
-  { "id": "meat", "name": "Meat", "image": "🥩", "dropRate": 99.3 },
-  { "id": "gold", "name": "Gold", "image": "💰", "dropRate": 0.1 }
+  { "id": "meat", "name": "Meat", "image": "🥩", "dropRate": 0.1 },
+  { "id": "gold", "name": "Gold", "image": "💰", "dropRate": 0.9 },
+  { "id": "health_potion", "name": "Health Potion", "image": "🧪", "dropRate": 0.05 },
+  { "id": "sword_iron", "name": "Iron Sword", "image": "🗡️", "dropRate": 0.001 },
+  { "id": "shield_wood", "name": "Wood Shield", "image": "🛡️", "dropRate": 0.004 }
 ]

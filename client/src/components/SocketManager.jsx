@@ -92,6 +92,28 @@ export const SocketManager = () => {
         soundManager.playBarkSound();
     }
     
+    function onDogDamage(dogId) {
+        // Find dog and check distance
+        const dogs = useStore.getState().dogs;
+        const dog = dogs[dogId];
+        const playerId = socket.id;
+        const player = useStore.getState().players[playerId]; // Need to access from store or socket?
+        
+        // Wait, socket.id is available. Store players has current player?
+        // Let's trust store.
+        if (dog && player) {
+             const dx = dog.position.x - player.position[0];
+             const dz = dog.position.z - player.position[2];
+             const dist = Math.sqrt(dx*dx + dz*dz);
+             if (dist < 15) { // Nearby
+                  soundManager.playDogYelp();
+             }
+        } else if (dog) {
+            // Fallback if player not found (race condition), just play if we know dog exists
+             soundManager.playDogYelp();
+        }
+    }
+    
     function onTraderUpdate(traderData) {
         setTrader(traderData);
     }
@@ -121,6 +143,7 @@ export const SocketManager = () => {
     socket.on('itemRemoved', onItemRemoved);
     socket.on('inventoryAdd', onInventoryAdd);
     socket.on('dogBark', onDogBark);
+    socket.on('dogDamage', onDogDamage);
     socket.on('traderUpdate', onTraderUpdate);
     socket.on('playerUpdate', onPlayerUpdate);
     socket.on('playerRespawn', onPlayerRespawn);
@@ -142,6 +165,7 @@ export const SocketManager = () => {
       socket.off('itemRemoved', onItemRemoved);
       socket.off('inventoryAdd', onInventoryAdd);
       socket.off('dogBark', onDogBark);
+      socket.off('dogDamage', onDogDamage);
       socket.off('traderUpdate', onTraderUpdate);
       socket.off('playerUpdate', onPlayerUpdate);
       socket.off('playerRespawn', onPlayerRespawn);

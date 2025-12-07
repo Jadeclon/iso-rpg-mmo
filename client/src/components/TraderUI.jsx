@@ -1,9 +1,12 @@
+import { socket } from './SocketManager';
 import { useStore } from '../store';
-import itemsDef from '../items.json';
+import { soundManager } from '../SoundManager';
 
 export const TraderUI = () => {
     const isTraderOpen = useStore((state) => state.isTraderOpen);
     const trader = useStore((state) => state.trader);
+    const inventory = useStore((state) => state.inventory);
+    const removeFromInventory = useStore((state) => state.removeFromInventory);
     
     // Default shop items (hardcoded for now as server just sends strings)
     // Ideally server sends full item definitions or IDs that map to itemsDef
@@ -12,6 +15,25 @@ export const TraderUI = () => {
         { id: 'sword_iron', name: 'Iron Sword', price: 100, icon: '🗡️' },
         { id: 'shield_wood', name: 'Wood Shield', price: 75, icon: '🛡️' }
     ];
+
+    const handleBuy = (item) => {
+        const goldItem = inventory.find(i => i.itemId === 'gold');
+        const goldCount = goldItem ? goldItem.count : 0;
+        
+        if (goldCount >= item.price) {
+            // Deduct Gold Locally (Optimistic)
+            for(let i=0; i<item.price; i++) {
+                removeFromInventory('gold');
+            }
+            
+            // Emit Trade
+            socket.emit('trade', { itemId: item.id, cost: item.price });
+            soundManager.playTradeSuccess();
+        } else {
+            // alert("Not enough Gold! Go kill some dogs.");
+            soundManager.playTradeFail();
+        }
+    };
 
     if (!isTraderOpen || !trader) return null;
 
@@ -65,7 +87,7 @@ export const TraderUI = () => {
                             borderRadius: '5px',
                             cursor: 'pointer',
                             fontWeight: 'bold'
-                        }} onClick={() => alert("Trading logic coming soon!")}>
+                        }} onClick={() => handleBuy(item)}>
                             {item.price} 💰
                         </button>
                     </div>

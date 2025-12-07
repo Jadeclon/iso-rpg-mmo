@@ -300,6 +300,51 @@ class SoundManager {
 
         voice1.play().catch(e => console.log("Voice 1 failed", e));
     }
+
+    playTradeSuccess() {
+        // Stop current voice if any
+        if (this.currentVoice) {
+            this.currentVoice.pause();
+            this.currentVoice = null;
+        }
+        const audio = new Audio('/sounds/voices/trader/great_choice.mp3');
+        audio.volume = 0.6;
+        audio.play().catch(e => console.log("Trade success sound failed", e));
+        this.currentVoice = audio;
+    }
+
+    playTradeFail() {
+        // Stop current voice if any
+        if (this.currentVoice) {
+            this.currentVoice.pause();
+            this.currentVoice = null;
+        }
+        const audio = new Audio('/sounds/voices/trader/aint_your_day.mp3');
+        audio.volume = 0.6;
+        audio.play().catch(e => console.log("Trade fail sound failed", e));
+        this.currentVoice = audio;
+    }
+
+    playDogYelp() {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        // Use Audio object or Buffer? Audio object is easier for one-off files, 
+        // but Buffer is better for rapid overlapping sounds (combat).
+        // Let's use Buffer for game sound effects.
+        if (!this.yelpBuffer) {
+            fetch('/sounds/dog_yelp.m4a')
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
+                .then(audioBuffer => {
+                    this.yelpBuffer = audioBuffer;
+                    this.playBuffer(this.yelpBuffer);
+                })
+                .catch(e => console.error("Error loading dog yelp", e));
+        } else {
+            this.playBuffer(this.yelpBuffer);
+        }
+    }
 }
 
 export const soundManager = new SoundManager();

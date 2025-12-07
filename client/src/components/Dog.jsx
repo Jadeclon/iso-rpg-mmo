@@ -32,10 +32,10 @@ export const Dog = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 100,
   const worldTarget = useMemo(() => new Vector3(), []);
 
   // Handle click to attack
-  const handleClick = (e) => {
-    e.stopPropagation();
-    socket.emit('attackDog', id);
-  };
+  // const handleClick = (e) => {
+  //   e.stopPropagation();
+  //   socket.emit('attackDog', id);
+  // };
   
   useFrame((stateCtx, delta) => {
       const now = stateCtx.clock.getElapsedTime();
@@ -102,25 +102,25 @@ export const Dog = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 100,
           head.current.rotation.x = Math.sin(t * 0.3) * 0.05;
           
           
-          if (wanderTarget) {
-            // Leg animation - Faster stride
-            const speedFactor = 5; 
-            leftLegF.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
-            rightLegF.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
-            leftLegB.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
-            rightLegB.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
-            
-              worldTarget.set(wanderTarget.x, group.current.position.y, wanderTarget.z);
-              const dist = group.current.position.distanceTo(worldTarget);
+          // if (wanderTarget) {
+          //   // Leg animation - Faster stride
+          //   const speedFactor = 5; 
+          //   leftLegF.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
+          //   rightLegF.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
+          //   leftLegB.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
+          //   rightLegB.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
+
+          //     worldTarget.set(wanderTarget.x, group.current.position.y, wanderTarget.z);
+          //     const dist = group.current.position.distanceTo(worldTarget);
               
-              if(dist < 0.2) {
-                  //Legs still
-                  leftLegF.current.rotation.x = 0;
-                  rightLegF.current.rotation.x = 0;
-                  leftLegB.current.rotation.x = 0;
-                  rightLegB.current.rotation.x = 0;
-              }
-          }
+          //     if(dist < 0.2) {
+          //         //Legs still
+          //         leftLegF.current.rotation.x = 0;
+          //         rightLegF.current.rotation.x = 0;
+          //         leftLegB.current.rotation.x = 0;
+          //         rightLegB.current.rotation.x = 0;
+          //     }
+          // }
       }
 
       // Tail wag (always wag a bit, more when happy/eating?)
@@ -132,7 +132,7 @@ export const Dog = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 100,
   const showHealth = hp < maxHp && hp > 0;
 
   return (
-    <group ref={group} position={position} rotation={rotation} onClick={handleClick}>
+    <group ref={group} position={position} rotation={rotation}>
       <Html position={[0, 1.2, 0]} center>
           {showHealth && (
               <div style={{ width: '50px', height: '6px', background: 'red', border: '1px solid black' }}>
