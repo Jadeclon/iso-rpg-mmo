@@ -13,6 +13,7 @@ import { ItemDrops } from './ItemDrops';
 
 export const Experience = () => {
   const players = useStore((state) => state.players);
+  const trader = useStore((state) => state.trader);
   const myId = socket.id;
 
   // Input handling
@@ -118,7 +119,15 @@ export const Experience = () => {
     <group>
       <World />
       <ItemDrops />
-      <Trader />
+      {trader && (
+          <Trader 
+            key="trader_main"
+            id="trader_main"
+            position={[trader.position.x, trader.position.y || 0, trader.position.z]} 
+            rotation={trader.rotation}
+            wanderTarget={trader.wanderTarget}
+          />
+      )}
       {Object.values(players).map((player) => (
         <Player 
             key={player.id} 

@@ -153,6 +153,7 @@ export const MapAssets = () => {
             hp={dog.hp}
             maxHp={dog.maxHp}
             state={dog.state}
+            wanderTarget={dog.wanderTarget}
           />
       ))}
       <RiverMesh />
