@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export const useStore = create((set) => ({
   players: {},
   dogs: {},
+  bears: {},
   items: {},
   inventory: [], // Added inventory array
   isInventoryOpen: false, // UI Toggle
@@ -19,6 +20,14 @@ export const useStore = create((set) => ({
       const newDogs = { ...state.dogs };
       delete newDogs[id];
       return { dogs: newDogs };
+  }),
+  setBears: (bears) => set({ bears }),
+  updateBear: (bear) => set((state) => ({ bears: { ...state.bears, [bear.id]: bear } })),
+  updateBears: (bears) => set((state) => ({ bears: { ...state.bears, ...bears } })), 
+  removeBear: (id) => set((state) => {
+      const newBears = { ...state.bears };
+      delete newBears[id];
+      return { bears: newBears };
   }),
   setItems: (items) => set({ items }),
   addItem: (item) => set((state) => ({ items: { ...state.items, [item.id]: item } })),

@@ -20,6 +20,7 @@ const PORT = process.env.PORT || 3002;
 // Game State
 const players = {};
 const dogs = {};
+const bears = {};
 const droppedItems = {};
 const itemsDef = require('../client/src/items.json');
 let trader = {
@@ -89,16 +90,67 @@ const spawnTribe = (tribe) => {
 // Initialize Dogs (Server Logic replicated from levelData.js)
 const initDogs = () => {
     // Create 5 tribes
-    for (let tribe = 0; tribe < process.env.TRIBES; tribe++) {
+    const numTribes = process.env.TRIBES || 5;
+    for (let tribe = 0; tribe < numTribes; tribe++) {
         spawnTribe(tribe);
     }
 };
 
 initDogs();
 
+const spawnBearTribe = (tribe) => {
+    let tribeX, tribeZ;
+    let validSpot = false;
+    
+    for(let attempt = 0; attempt < 10; attempt++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 15 + Math.random() * 25;
+        tribeX = Math.sin(angle) * dist;
+        tribeZ = Math.cos(angle) * dist;
+        
+        if (!isPositionInRiver(tribeX, tribeZ)) {
+            validSpot = true;
+            break;
+        }
+    }
+    
+    if (!validSpot) return;
+    
+    for (let i = 0; i < 2; i++) {
+        const offsetX = (Math.random() - 0.5) * 4;
+        const offsetZ = (Math.random() - 0.5) * 4;
+        
+        const position = { x: tribeX + offsetX, y: 0, z: tribeZ + offsetZ };
+        const id = `bear-tribe${tribe}-${Date.now()}-${i}`;
+        bears[id] = {
+            id: id,
+            position: position,
+            anchorPosition: { ...position },
+            rotation: [0, Math.random() * Math.PI * 2, 0],
+            hp: 200,
+            maxHp: 200,
+            state: 'idle', 
+            target: null,
+            tribeId: tribe,
+            wanderTarget: null,
+            nextWanderTime: Date.now() + Math.random() * 5000
+        };
+    }
+    io.emit('bearsMoved', bears); 
+};
+
+const initBears = () => {
+    for (let tribe = 0; tribe < 3; tribe++) {
+        spawnBearTribe(tribe);
+    }
+};
+
+initBears();
+
 // Game Loop for dogs
 setInterval(() => {
     const changedDogs = {};
+    const changedBears = {};
     const now = Date.now();
 
     Object.values(dogs).forEach(dog => {
@@ -193,6 +245,96 @@ setInterval(() => {
     if (Object.keys(changedDogs).length > 0) {
         io.emit('dogsMoved', changedDogs);
     }
+
+    Object.values(bears).forEach(bear => {
+        if (bear.state === 'angry' && bear.target && players[bear.target]) {
+            const player = players[bear.target];
+            const dx = player.position[0] - bear.position.x;
+            const dz = player.position[2] - bear.position.z;
+            const dist = Math.sqrt(dx*dx + dz*dz);
+            
+            if (dist > 20) {
+                bear.state = 'idle';
+                bear.target = null;
+                changedBears[bear.id] = bear;
+                io.emit('bearUpdate', bear);
+            } else if (dist > 2.0) { // Bigger range for bear
+                const speed = 0.38; // Slower than dog
+                bear.position.x += (dx / dist) * speed;
+                bear.position.z += (dz / dist) * speed;
+                
+                bear.rotation[1] = Math.atan2(dx, dz);
+                changedBears[bear.id] = bear;
+            } else {
+                if (!bear.lastAttack || now - bear.lastAttack > 2500) { // Slower attack
+                    player.hp -= 25; // More damage
+                    bear.lastAttack = now;
+                    io.emit('bearBark', bear.id); // Re-use bark sound for now or add roar?
+                    
+                    if (player.hp <= 0) {
+                        player.hp = 100;
+                        player.position = [0, 0, 0];
+                        
+                        Object.values(bears).forEach(b => {
+                            if (b.target === player.id) {
+                                b.target = null;
+                                b.state = 'idle';
+                                io.emit('bearUpdate', b);
+                            }
+                        });
+                        // Clear dogs too
+                         Object.values(dogs).forEach(d => {
+                            if (d.target === player.id) {
+                                d.target = null;
+                                d.state = 'idle';
+                                io.emit('dogUpdate', d);
+                            }
+                        });
+                        
+                        io.emit('playerRespawn', player);
+                    } else {
+                        io.emit('playerUpdate', player);
+                    }
+                }
+            }
+        } else if (bear.state === 'angry' && (!bear.target || !players[bear.target])) {
+            bear.state = 'idle';
+            bear.target = null;
+            changedBears[bear.id] = bear;
+        } else if (bear.state === 'idle') {
+            if (bear.wanderTarget) {
+                const dx = bear.wanderTarget.x - bear.position.x;
+                const dz = bear.wanderTarget.z - bear.position.z;
+                const dist = Math.sqrt(dx*dx + dz*dz);
+                
+                if (dist < 0.2) {
+                    bear.wanderTarget = null;
+                    bear.nextWanderTime = now + 2000 + Math.random() * 3000;
+                } else {
+                    const speed = 0.1;
+                    bear.position.x += (dx / dist) * speed;
+                    bear.position.z += (dz / dist) * speed;
+                    bear.rotation[1] = Math.atan2(dx, dz);
+                    changedBears[bear.id] = bear; 
+                }
+            } else {
+                if (now > bear.nextWanderTime) {
+                    const radius = 5;
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = Math.random() * radius;
+                    
+                    bear.wanderTarget = {
+                        x: bear.anchorPosition.x + Math.sin(angle) * dist,
+                        z: bear.anchorPosition.z + Math.cos(angle) * dist
+                    };
+                }
+            }
+        }
+    });
+
+    if (Object.keys(changedBears).length > 0) {
+        io.emit('bearsMoved', changedBears);
+    }
     
     // Trader Logic
     if (trader) {
@@ -245,6 +387,7 @@ io.on('connection', (socket) => {
   // Send current players and dogs to new player
   socket.emit('currentPlayers', players);
   socket.emit('currentDogs', dogs);
+  socket.emit('currentBears', bears);
   socket.emit('currentItems', droppedItems);
   socket.emit('traderUpdate', trader);
 
@@ -330,6 +473,59 @@ io.on('connection', (socket) => {
       }
   };
 
+  const handleBearDamage = (bearId, damage, attackerId) => {
+      const bear = bears[bearId];
+      if (!bear) return;
+
+    bear.hp -= damage;
+    io.emit('bearDamage', bear.id);
+    
+    if (bear.state !== 'angry') {
+         const tribeId = bear.tribeId;
+         Object.values(bears).forEach(b => {
+             if (b.tribeId === tribeId) {
+                 b.state = 'angry';
+                 b.target = attackerId;
+                 io.emit('bearUpdate', b);
+             }
+         });
+      }
+
+    if (bear.hp <= 0) {
+        const tribeId = bear.tribeId;
+        const position = { ...bear.position };
+        delete bears[bearId];
+        io.emit('bearKilled', bearId);
+        
+        const remaining = Object.values(bears).filter(b => b.tribeId === tribeId).length;
+        if (remaining === 0) {
+            const delay = 180000 + Math.random() * 120000; 
+            setTimeout(() => {
+                spawnBearTribe(tribeId);
+            }, delay);
+        }
+          
+          itemsDef.forEach(item => {
+              if (Math.random() < item.dropRate) {
+                  const id = `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                  const drop = {
+                      id: id,
+                      itemId: item.id,
+                      position: {
+                          x: position.x + (Math.random() - 0.5), 
+                          z: position.z + (Math.random() - 0.5)
+                      },
+                      image: item.image
+                  };
+                  droppedItems[id] = drop;
+                  io.emit('itemDropped', drop);
+              }
+          });
+      } else {
+          io.emit('bearUpdate', bear);
+      }
+  };
+
   socket.on('playerAttack', () => {
       if (players[socket.id]) {
           const player = players[socket.id];
@@ -346,6 +542,17 @@ io.on('connection', (socket) => {
                   handleDogDamage(dog.id, 20, socket.id);
               }
           });
+
+          // Check for bears
+          Object.values(bears).forEach(bear => {
+            const dx = bear.position.x - player.position[0];
+            const dz = bear.position.z - player.position[2];
+            const dist = Math.sqrt(dx*dx + dz*dz);
+            
+            if (dist < 4.0) { // Bigger hit range
+                handleBearDamage(bear.id, 20, socket.id);
+            }
+        });
       }
   });
 
@@ -363,6 +570,24 @@ io.on('connection', (socket) => {
                      d.state = 'angry';
                      d.target = target;
                      io.emit('dogUpdate', d);
+                 }
+             });
+          }
+      }
+  });
+
+  socket.on('attackBear', (bearId) => {
+      const bear = bears[bearId];
+      if (bear) {
+           if (bear.state !== 'angry') {
+             const tribeId = bear.tribeId;
+             const target = socket.id;
+
+             Object.values(bears).forEach(b => {
+                 if (b.tribeId === tribeId) {
+                     b.state = 'angry';
+                     b.target = target;
+                     io.emit('bearUpdate', b);
                  }
              });
           }
@@ -511,6 +736,14 @@ io.on('connection', (socket) => {
             dog.target = null;
             dog.state = 'idle';
             io.emit('dogUpdate', dog);
+        }
+    });
+    
+    Object.values(bears).forEach(bear => {
+        if (bear.target === socket.id) {
+            bear.target = null;
+            bear.state = 'idle';
+            io.emit('bearUpdate', bear);
         }
     });
   });
