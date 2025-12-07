@@ -20,6 +20,7 @@ export const SocketManager = () => {
   const addItem = useStore((state) => state.addItem);
   const removeItem = useStore((state) => state.removeItem);
   const addToInventory = useStore((state) => state.addToInventory);
+  const setTrader = useStore((state) => state.setTrader);
 
   useEffect(() => {
     function onConnect() {
@@ -84,11 +85,15 @@ export const SocketManager = () => {
     
     function onInventoryAdd(item) {
         addToInventory(item);
-        // Maybe play a pickup sound?
+        soundManager.playPickupSound();
     }
 
     function onDogBark() {
         soundManager.playBarkSound();
+    }
+    
+    function onTraderUpdate(traderData) {
+        setTrader(traderData);
     }
 
     function onPlayerUpdate(player) {
@@ -116,6 +121,7 @@ export const SocketManager = () => {
     socket.on('itemRemoved', onItemRemoved);
     socket.on('inventoryAdd', onInventoryAdd);
     socket.on('dogBark', onDogBark);
+    socket.on('traderUpdate', onTraderUpdate);
     socket.on('playerUpdate', onPlayerUpdate);
     socket.on('playerRespawn', onPlayerRespawn);
 
@@ -136,6 +142,7 @@ export const SocketManager = () => {
       socket.off('itemRemoved', onItemRemoved);
       socket.off('inventoryAdd', onInventoryAdd);
       socket.off('dogBark', onDogBark);
+      socket.off('traderUpdate', onTraderUpdate);
       socket.off('playerUpdate', onPlayerUpdate);
       socket.off('playerRespawn', onPlayerRespawn);
     };

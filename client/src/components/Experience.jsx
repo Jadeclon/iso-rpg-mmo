@@ -5,6 +5,7 @@ import { Player } from './Player';
 import { socket } from './SocketManager';
 import { soundManager } from '../SoundManager';
 import { useState, useEffect, useRef } from 'react';
+import { Trader } from './Trader';
 import { Vector3 } from 'three';
 
 import { LEVEL_DATA } from '../levelData';
@@ -117,6 +118,7 @@ export const Experience = () => {
     <group>
       <World />
       <ItemDrops />
+      <Trader />
       {Object.values(players).map((player) => (
         <Player 
             key={player.id} 

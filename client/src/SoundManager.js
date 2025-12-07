@@ -213,6 +213,93 @@ class SoundManager {
             }
         }
     }
+    playPickupSound() {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        const t = this.ctx.currentTime;
+        const oscillator = this.ctx.createOscillator();
+        const gainNode = this.ctx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1000, t);
+        oscillator.frequency.exponentialRampToValueAtTime(2000, t + 0.1);
+
+        gainNode.gain.setValueAtTime(0.1, t);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.ctx.destination);
+
+        oscillator.start(t);
+        oscillator.stop(t + 0.1);
+    }
+
+    playEquipSound() {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        const t = this.ctx.currentTime;
+
+        // Metallic "Clang" - Ringing oscillators
+        const fund = 800;
+        const ratios = [1, 1.5, 2.7, 3.2]; // Non-integer ratios for metal
+        
+        ratios.forEach(ratio => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            
+            osc.frequency.setValueAtTime(fund * ratio, t);
+            osc.type = 'triangle'; // Brighter than sine
+            
+            gain.gain.setValueAtTime(0.1, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5); // Long ring
+            
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            
+            osc.start(t);
+            osc.stop(t + 0.5);
+        });
+
+        // Initial impact (noise burst)
+        const bufferSize = this.ctx.sampleRate * 0.05;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.3, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        noise.connect(noiseGain);
+        noiseGain.connect(this.ctx.destination);
+        noise.start(t);
+    }
+    
+    playTraderWelcome() {
+        if (this.currentVoice) {
+            this.currentVoice.pause();
+            this.currentVoice = null;
+        }
+
+        const voice1 = new Audio('/sounds/voices/trader/hello_stranger.mp3');
+        const voice2 = new Audio('/sounds/voices/trader/what_can_I_do.mp3');
+        
+        voice1.volume = 0.5;
+        voice2.volume = 0.5;
+
+        this.currentVoice = voice1;
+        
+        voice1.addEventListener('ended', () => {
+             this.currentVoice = voice2;
+             voice2.play().catch(e => console.log("Voice 2 failed", e));
+        });
+
+        voice1.play().catch(e => console.log("Voice 1 failed", e));
+    }
 }
 
 export const soundManager = new SoundManager();

@@ -5,11 +5,14 @@ import { UIControls } from './components/UIControls';
 import { SkinSelector } from './components/SkinSelector';
 import { Minimap } from './components/Minimap';
 import { Inventory } from './components/Inventory';
+import { TraderUI } from './components/TraderUI';
 import { useStore } from './store';
 import { useEffect } from 'react';
+import { soundManager } from './SoundManager';
 
 function App() {
   const toggleInventory = useStore((state) => state.toggleInventory);
+  const toggleTrader = useStore((state) => state.toggleTrader);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -20,6 +23,27 @@ function App() {
             toggleInventory();
         }
 
+        if (e.code === 'KeyT') {
+             const state = useStore.getState();
+             const myId = socket.id;
+             const me = state.players[myId];
+             const trader = state.trader;
+             
+             if (me && trader) {
+                 const dx = me.position[0] - trader.position.x;
+                 const dz = me.position[2] - trader.position.z;
+                 const dist = Math.sqrt(dx*dx + dz*dz);
+                 
+                 if (dist < 4.0) {
+                     if (!state.isTraderOpen) {
+                         // Only play if OPENING the shop
+                         soundManager.playTraderWelcome();
+                     }
+                     toggleTrader();
+                 }
+             }
+        }
+        
         if (e.code === 'KeyY' || e.key.toLowerCase() === 'y') {
              const state = useStore.getState();
              const myId = socket.id;
@@ -53,6 +77,7 @@ function App() {
       <UIControls />
       <SkinSelector />
       <Inventory />
+      <TraderUI />
       <Minimap />
     </div>
   );

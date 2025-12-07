@@ -9,6 +9,8 @@ export const useStore = create((set) => ({
   chatMessages: [],
   showGrid: false,
   isNight: false,
+  trader: null,
+  isTraderOpen: false,
   setPlayers: (players) => set({ players }),
   setDogs: (dogs) => set({ dogs }),
   updateDog: (dog) => set((state) => ({ dogs: { ...state.dogs, [dog.id]: dog } })),
@@ -58,5 +60,7 @@ export const useStore = create((set) => ({
     delete newPlayers[id];
     return { players: newPlayers };
   }),
+  setTrader: (trader) => set({ trader }),
+  toggleTrader: () => set((state) => ({ isTraderOpen: !state.isTraderOpen })),
 
 }));

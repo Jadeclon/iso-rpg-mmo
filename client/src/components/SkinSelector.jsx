@@ -1,5 +1,6 @@
 import { useStore } from '../store';
 import { socket } from './SocketManager';
+import { soundManager } from '../SoundManager';
 
 export const SkinSelector = () => {
     const myId = socket.id;
@@ -19,6 +20,10 @@ export const SkinSelector = () => {
         socket.emit('skinUpdate', skinId);
         // Optimistic update
         useStore.getState().updatePlayerSkin(myId, skinId);
+        
+        if (skinId === 'warrior') {
+            soundManager.playEquipSound();
+        }
     };
 
     return (

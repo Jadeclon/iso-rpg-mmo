@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { OrthographicCamera } from '@react-three/drei';
 import { useStore } from '../store';
 import { socket } from './SocketManager';
@@ -9,6 +9,7 @@ export const IsometricCamera = () => {
     const cameraRef = useRef();
     const players = useStore((state) => state.players);
     const myId = socket.id;
+    const { gl } = useThree();
 
     const rotationRef = useRef(Math.PI / 4); // Default 45 degrees
     const isDragging = useRef(false);
@@ -29,23 +30,27 @@ export const IsometricCamera = () => {
         const handleMouseMove = (e) => {
             if (isDragging.current) {
                 const deltaX = e.clientX - prevMouseX.current;
-                rotationRef.current -= deltaX * 0.01; // Adjust sensitivity here
+                rotationRef.current -= deltaX * 0.005; 
                 prevMouseX.current = e.clientX;
             }
         };
 
-        const handleContextMenu = (e) => e.preventDefault(); // Disable context menu
+        const handleContextMenu = (e) => {
+            e.preventDefault();
+            return false;
+        };
 
-        window.addEventListener('mousedown', handleMouseDown);
-        window.addEventListener('mouseup', handleMouseUp);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('contextmenu', handleContextMenu);
+        // Use capture: true to ensure we get the events before UI elements
+        window.addEventListener('mousedown', handleMouseDown, { capture: true });
+        window.addEventListener('mouseup', handleMouseUp, { capture: true });
+        window.addEventListener('mousemove', handleMouseMove, { capture: true });
+        window.addEventListener('contextmenu', handleContextMenu, { capture: true });
 
         return () => {
-            window.removeEventListener('mousedown', handleMouseDown);
-            window.removeEventListener('mouseup', handleMouseUp);
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('contextmenu', handleContextMenu);
+            window.removeEventListener('mousedown', handleMouseDown, { capture: true });
+            window.removeEventListener('mouseup', handleMouseUp, { capture: true });
+            window.removeEventListener('mousemove', handleMouseMove, { capture: true });
+            window.removeEventListener('contextmenu', handleContextMenu, { capture: true });
         };
     }, []);
 
