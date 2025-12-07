@@ -100,7 +100,6 @@ export const Trader = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 1
                   rightLeg.current.rotation.x = 0;
                   leftArm.current.rotation.x = 0;
                   rightArm.current.rotation.x = 0;
-                  console.log('legs still');
               }
           }
       }

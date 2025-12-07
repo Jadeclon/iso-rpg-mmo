@@ -66,7 +66,7 @@ const initDogs = () => {
         if (!validSpot) continue; // Skip this tribe if can't find spot
         
         // Spawn 3 dogs around this center
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < 3; i++) {
             const offsetX = (Math.random() - 0.5) * 4; // Spread within 4 units
             const offsetZ = (Math.random() - 0.5) * 4;
             

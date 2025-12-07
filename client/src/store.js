@@ -62,5 +62,9 @@ export const useStore = create((set) => ({
   }),
   setTrader: (trader) => set({ trader }),
   toggleTrader: () => set((state) => ({ isTraderOpen: !state.isTraderOpen })),
+  cameraFollowsPlayer: true,
+  toggleCameraFollow: () => set((state) => ({ cameraFollowsPlayer: !state.cameraFollowsPlayer })),
+  cameraBasedMovement: true,
+  toggleCameraBasedMovement: () => set((state) => ({ cameraBasedMovement: !state.cameraBasedMovement })),
 
 }));

@@ -43,6 +43,36 @@ export const UIControls = () => {
             >
                 Time: {useStore(state => state.isNight) ? 'Night' : 'Day'}
             </button>
+            <button 
+                onClick={useStore(state => state.toggleCameraFollow)}
+                style={{
+                    padding: '10px 15px',
+                    background: useStore(state => state.cameraFollowsPlayer) ? '#2196F3' : '#9E9E9E',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                }}
+            >
+                Cam: {useStore(state => state.cameraFollowsPlayer) ? 'Follow' : 'Fixed'}
+            </button>
+            <button 
+                onClick={useStore(state => state.toggleCameraBasedMovement)}
+                style={{
+                    padding: '10px 15px',
+                    background: useStore(state => state.cameraBasedMovement) ? '#2196F3' : '#9E9E9E',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                }}
+            >
+                Move: {useStore(state => state.cameraBasedMovement) ? 'Relative' : 'Absolute'}
+            </button>
         </div>
     );
 };

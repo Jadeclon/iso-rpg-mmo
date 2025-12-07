@@ -83,8 +83,39 @@ export const Experience = () => {
     const currentPos = players[myId].position;
     
     if (movement.x !== 0 || movement.z !== 0) {
-        let nextX = currentPos[0] + movement.x * speed;
-        let nextZ = currentPos[2] + movement.z * speed;
+        let moveX = movement.x;
+        let moveZ = movement.z;
+
+        if (useStore.getState().cameraBasedMovement) {
+             const cam = state.camera;
+             const forward = new Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
+             forward.y = 0;
+             forward.normalize();
+             
+             const right = new Vector3(1, 0, 0).applyQuaternion(cam.quaternion);
+             right.y = 0;
+             right.normalize();
+
+             // W (z=-1) should move in forward direction
+             // S (z=1) should move backward
+             // D (x=1) should move right 
+             // A (x=-1) should move left
+             
+             // movement.z is -1 for W. We want positive Forward scale.
+             // So scale = -movement.z
+             
+             const worldDir = forward.clone().multiplyScalar(-movement.z).add(right.clone().multiplyScalar(movement.x));
+             worldDir.normalize(); // Ensure combined speed isn't faster (already handled basically but good to be safe)
+             
+             // Map back to nextX/nextZ logic which expects raw offsets
+             // Logic below: nextX = currentPos + moveX * speed
+             // So we just replace moveX/moveZ with our calculated direction components
+             moveX = worldDir.x;
+             moveZ = worldDir.z;
+        }
+
+        let nextX = currentPos[0] + moveX * speed;
+        let nextZ = currentPos[2] + moveZ * speed;
         
         // Simple collision check per axis to allow sliding
         if (checkCollision([nextX, 0, currentPos[2]])) {
