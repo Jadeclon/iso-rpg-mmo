@@ -3,25 +3,34 @@ import { create } from 'zustand';
 export const useStore = create((set) => ({
   players: {},
   dogs: {},
-  items: {}, // Added items state
+  items: {},
+  inventory: [], // Added inventory array
+  isInventoryOpen: false, // UI Toggle
   chatMessages: [],
   showGrid: false,
-  isNight: true,
+  isNight: false,
   setPlayers: (players) => set({ players }),
   setDogs: (dogs) => set({ dogs }),
   updateDog: (dog) => set((state) => ({ dogs: { ...state.dogs, [dog.id]: dog } })),
-  updateDogs: (dogs) => set((state) => ({ dogs: { ...state.dogs, ...dogs } })), // For bulk updates like movement
+  updateDogs: (dogs) => set((state) => ({ dogs: { ...state.dogs, ...dogs } })), 
   removeDog: (id) => set((state) => {
       const newDogs = { ...state.dogs };
       delete newDogs[id];
       return { dogs: newDogs };
   }),
-  setItems: (items) => set({ items }), // Added setItems action
-  addItem: (item) => set((state) => ({ items: { ...state.items, [item.id]: item } })), // Added addItem action
-  removeItem: (id) => set((state) => { // Added removeItem action
+  setItems: (items) => set({ items }),
+  addItem: (item) => set((state) => ({ items: { ...state.items, [item.id]: item } })),
+  removeItem: (id) => set((state) => {
     const newItems = { ...state.items };
     delete newItems[id];
     return { items: newItems };
+  }),
+  toggleInventory: () => set((state) => ({ isInventoryOpen: !state.isInventoryOpen })),
+  addToInventory: (item) => set((state) => ({ inventory: [...state.inventory, item] })),
+  removeFromInventory: (index) => set((state) => {
+      const newInv = [...state.inventory];
+      newInv.splice(index, 1);
+      return { inventory: newInv };
   }),
   toggleIsNight: () => set((state) => ({ isNight: !state.isNight })),
   addPlayer: (id, player) => set((state) => ({ players: { ...state.players, [id]: player } })),

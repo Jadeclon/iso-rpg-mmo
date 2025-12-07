@@ -2,6 +2,14 @@ class SoundManager {
     constructor() {
         this.ctx = null;
         this.init();
+        
+        // Music State
+        this.musicPlaylist = [
+            '/sounds/music/mystery.wav',
+            '/sounds/music/summer_evening_sweden.wav'
+        ];
+        this.currentMusic = null;
+        this.lastTrackIndex = -1;
     }
 
     init() {
@@ -132,6 +140,78 @@ class SoundManager {
         source.buffer = buffer;
         source.connect(this.ctx.destination);
         source.start(0);
+    }
+
+    playMusic() {
+        if (this.currentMusic) return; // Already playing
+
+        let trackIndex;
+        // Simple random playlist logic avoid repeat
+        do {
+            trackIndex = Math.floor(Math.random() * this.musicPlaylist.length);
+        } while (this.musicPlaylist.length > 1 && trackIndex === this.lastTrackIndex);
+
+        this.lastTrackIndex = trackIndex;
+        const track = this.musicPlaylist[trackIndex];
+
+        // Using HTML5 Audio for music streaming
+        this.currentMusic = new Audio(track);
+        this.currentMusic.volume = 0.2; // Background volume
+        
+        this.currentMusic.addEventListener('ended', () => {
+            this.currentMusic = null;
+            this.playMusic(); // Play next
+        });
+        
+        this.currentMusic.play().catch(e => console.log('Music play failed (user interaction needed):', e));
+    }
+    
+    stopMusic() {
+        if (this.currentMusic) {
+             this.currentMusic.pause();
+             this.currentMusic = null;
+        }
+    }
+
+    playStepSound(isWater) {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+
+        const t = this.ctx.currentTime;
+        const oscillator = this.ctx.createOscillator();
+        const gainNode = this.ctx.createGain();
+
+        if (isWater) {
+            // Water: Play audio file
+             if (!this.waterStepBuffer) {
+                fetch('/sounds/water_footstep.m4a')
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
+                    .then(audioBuffer => {
+                        this.waterStepBuffer = audioBuffer;
+                        this.playBuffer(this.waterStepBuffer);
+                    })
+                    .catch(e => console.error("Error loading water step sound", e));
+            } else {
+                this.playBuffer(this.waterStepBuffer);
+            }
+        } else {
+            // Ground: Play audio file
+            if (!this.stepBuffer) {
+                fetch('/sounds/gras_footstep.m4a')
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
+                    .then(audioBuffer => {
+                        this.stepBuffer = audioBuffer;
+                        this.playBuffer(this.stepBuffer);
+                    })
+                    .catch(e => console.error("Error loading step sound", e));
+            } else {
+                this.playBuffer(this.stepBuffer);
+            }
+        }
     }
 }
 

@@ -3,7 +3,8 @@ import { useStore } from '../store';
 import { World } from './World';
 import { Player } from './Player';
 import { socket } from './SocketManager';
-import { useState, useEffect } from 'react';
+import { soundManager } from '../SoundManager';
+import { useState, useEffect, useRef } from 'react';
 import { Vector3 } from 'three';
 
 import { LEVEL_DATA } from '../levelData';
@@ -67,6 +68,12 @@ export const Experience = () => {
       return false; 
   };
 
+  const getRiverX = (z) => Math.sin(z * 0.05) * 20 + Math.sin(z * 0.1) * 10;
+  const isPositionInRiver = (x, z) => {
+      const riverX = getRiverX(z);
+      return Math.abs(x - riverX) < 8.0; 
+  };
+
   useFrame((state, delta) => {
     if (!myId || !players[myId]) return;
 
@@ -95,6 +102,14 @@ export const Experience = () => {
         // Optimistic update
         useStore.getState().updatePlayerPosition(myId, newPos);
         socket.emit('playerMove', newPos);
+
+        // Step Sounds
+        const now = Date.now();
+        if (!state.lastStepTime || now - state.lastStepTime > 350) { // 350ms between steps
+            const inRiver = isPositionInRiver(newPos[0], newPos[2]);
+            soundManager.playStepSound(inRiver);
+            state.lastStepTime = now;
+        }
     }
   });
 

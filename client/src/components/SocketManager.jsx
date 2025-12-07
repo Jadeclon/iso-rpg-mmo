@@ -18,10 +18,13 @@ export const SocketManager = () => {
   const removeDog = useStore((state) => state.removeDog);
   const setItems = useStore((state) => state.setItems);
   const addItem = useStore((state) => state.addItem);
+  const removeItem = useStore((state) => state.removeItem);
+  const addToInventory = useStore((state) => state.addToInventory);
 
   useEffect(() => {
     function onConnect() {
       console.log("Connected to server");
+      soundManager.playMusic();
     }
 
     function onDisconnect() {
@@ -74,6 +77,15 @@ export const SocketManager = () => {
     function onItemDropped(item) {
         addItem(item);
     }
+    
+    function onItemRemoved(itemId) {
+        removeItem(itemId);
+    }
+    
+    function onInventoryAdd(item) {
+        addToInventory(item);
+        // Maybe play a pickup sound?
+    }
 
     function onDogBark() {
         soundManager.playBarkSound();
@@ -101,6 +113,8 @@ export const SocketManager = () => {
     socket.on('dogsMoved', onDogsMoved);
     socket.on('dogKilled', onDogKilled);
     socket.on('itemDropped', onItemDropped);
+    socket.on('itemRemoved', onItemRemoved);
+    socket.on('inventoryAdd', onInventoryAdd);
     socket.on('dogBark', onDogBark);
     socket.on('playerUpdate', onPlayerUpdate);
     socket.on('playerRespawn', onPlayerRespawn);
@@ -119,6 +133,8 @@ export const SocketManager = () => {
       socket.off('dogsMoved', onDogsMoved);
       socket.off('dogKilled', onDogKilled);
       socket.off('itemDropped', onItemDropped);
+      socket.off('itemRemoved', onItemRemoved);
+      socket.off('inventoryAdd', onInventoryAdd);
       socket.off('dogBark', onDogBark);
       socket.off('playerUpdate', onPlayerUpdate);
       socket.off('playerRespawn', onPlayerRespawn);

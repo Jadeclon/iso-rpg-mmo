@@ -284,7 +284,24 @@ io.on('connection', (socket) => {
         });
       }
   });
+      // Pickup Item
+  socket.on('pickupItem', (itemId) => {
+      const item = droppedItems[itemId];
+      if (item && players[socket.id]) {
+          const p = players[socket.id];
+          const dx = p.position[0] - item.position.x;
+          const dz = p.position[2] - item.position.z;
+          const dist = Math.sqrt(dx*dx + dz*dz);
+          
+          if (dist < 2.0) { // Pickup range
+              delete droppedItems[itemId];
+              io.emit('itemRemoved', itemId);
+              socket.emit('inventoryAdd', item);
+          }
+      }
+  });
 
+  // Handle disconnect
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     delete players[socket.id];
