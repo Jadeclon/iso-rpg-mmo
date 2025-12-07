@@ -15,10 +15,10 @@ export const GameCanvas = () => {
       <Canvas shadows>
         <color attach="background" args={[isNight ? '#171717' : '#87CEEB']} />
         <IsometricCamera />
-        <ambientLight intensity={isNight ? 0.5 : 0.8} />
+        <ambientLight intensity={isNight ? 0.5 : 1.2} />
         <directionalLight 
             position={[10, 10, 5]} 
-            intensity={isNight ? 1 : 1.5} 
+            intensity={isNight ? 1 : 2.5} 
             castShadow 
             shadow-mapSize={[1024, 1024]} 
         />

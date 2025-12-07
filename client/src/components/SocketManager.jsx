@@ -2,7 +2,9 @@ import { useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { useStore } from '../store';
 
-export const socket = io('http://localhost:3002');
+const URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3002';
+
+export const socket = io(URL);
 
 export const SocketManager = () => {
   const setPlayers = useStore((state) => state.setPlayers);
