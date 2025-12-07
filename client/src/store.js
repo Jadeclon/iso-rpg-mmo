@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export const useStore = create((set) => ({
   players: {},
   dogs: {},
+  items: {}, // Added items state
   chatMessages: [],
   showGrid: false,
   isNight: true,
@@ -14,6 +15,13 @@ export const useStore = create((set) => ({
       const newDogs = { ...state.dogs };
       delete newDogs[id];
       return { dogs: newDogs };
+  }),
+  setItems: (items) => set({ items }), // Added setItems action
+  addItem: (item) => set((state) => ({ items: { ...state.items, [item.id]: item } })), // Added addItem action
+  removeItem: (id) => set((state) => { // Added removeItem action
+    const newItems = { ...state.items };
+    delete newItems[id];
+    return { items: newItems };
   }),
   toggleIsNight: () => set((state) => ({ isNight: !state.isNight })),
   addPlayer: (id, player) => set((state) => ({ players: { ...state.players, [id]: player } })),

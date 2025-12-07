@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { Vector3 } from 'three';
 
 import { LEVEL_DATA } from '../levelData';
+import { ItemDrops } from './ItemDrops';
 
 export const Experience = () => {
   const players = useStore((state) => state.players);
@@ -100,6 +101,7 @@ export const Experience = () => {
   return (
     <group>
       <World />
+      <ItemDrops />
       {Object.values(players).map((player) => (
         <Player 
             key={player.id} 

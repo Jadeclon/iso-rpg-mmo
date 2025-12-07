@@ -19,6 +19,8 @@ const PORT = process.env.PORT || 3002;
 // Game State
 const players = {};
 const dogs = {};
+const droppedItems = {};
+const itemsDef = require('../client/src/items.json');
 
 // Initialize Dogs (Server Logic replicated from levelData.js)
 const initDogs = () => {
@@ -195,6 +197,7 @@ io.on('connection', (socket) => {
   // Send current players and dogs to new player
   socket.emit('currentPlayers', players);
   socket.emit('currentDogs', dogs);
+  socket.emit('currentItems', droppedItems);
 
   // Broadcast new player to others
   socket.broadcast.emit('newPlayer', players[socket.id]);
@@ -245,8 +248,27 @@ io.on('connection', (socket) => {
           }
 
           if (dog.hp <= 0) {
+              const position = { ...dog.position }; // Capture position before delete
               delete dogs[dogId];
               io.emit('dogKilled', dogId);
+              
+              // Item Drop Logic
+              itemsDef.forEach(item => {
+                  if (Math.random() < item.dropRate) {
+                      const id = `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                      const drop = {
+                          id: id,
+                          itemId: item.id,
+                          position: {
+                              x: position.x + (Math.random() - 0.5), 
+                              z: position.z + (Math.random() - 0.5)
+                          },
+                          image: item.image
+                      };
+                      droppedItems[id] = drop;
+                      io.emit('itemDropped', drop);
+                  }
+              });
           } else {
               io.emit('dogUpdate', dog);
           }

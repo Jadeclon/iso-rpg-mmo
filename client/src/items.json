@@ -1,0 +1,5 @@
+[
+  { "id": "bone", "name": "Bone", "image": "🦴", "dropRate": 0.5 },
+  { "id": "meat", "name": "Meat", "image": "🥩", "dropRate": 99.3 },
+  { "id": "gold", "name": "Gold", "image": "💰", "dropRate": 0.1 }
+]
