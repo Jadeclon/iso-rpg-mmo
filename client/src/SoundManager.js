@@ -104,6 +104,35 @@ class SoundManager {
         oscillator.start(t);
         oscillator.stop(t + 0.2);
     }
+
+    playBarkSound() {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+
+        // Cache the buffer
+        if (!this.barkBuffer) {
+            fetch('/sounds/bark.wav')
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
+                .then(audioBuffer => {
+                    this.barkBuffer = audioBuffer;
+                    this.playBuffer(this.barkBuffer);
+                })
+                .catch(e => console.error("Error loading bark sound", e));
+        } else {
+            this.playBuffer(this.barkBuffer);
+        }
+    }
+
+    playBuffer(buffer) {
+        if (!this.ctx) return;
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.ctx.destination);
+        source.start(0);
+    }
 }
 
 export const soundManager = new SoundManager();

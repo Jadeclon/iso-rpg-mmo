@@ -121,7 +121,21 @@ const RealisticRock = ({ position, scale, rotation }) => {
     );
 }
 
+import { useStore } from '../store';
+
+// ... (previous imports)
+
+// ... (WaterMaterial implementation)
+
+// ... (RiverMesh implementation)
+
+// ... (RealisticTree implementation)
+
+// ... (RealisticRock implementation)
+
 export const MapAssets = () => {
+  const dogs = useStore((state) => state.dogs);
+
   return (
     <group>
       {LEVEL_DATA.trees.map(item => (
@@ -130,8 +144,16 @@ export const MapAssets = () => {
       {LEVEL_DATA.rocks.map(item => (
           <RealisticRock key={item.id} position={item.position} scale={item.scale} rotation={item.rotation} />
       ))}
-      {LEVEL_DATA.dogs.map(item => (
-          <Dog key={item.id} position={item.position} rotation={item.rotation} />
+      {Object.values(dogs).map(dog => (
+          <Dog 
+            key={dog.id} 
+            id={dog.id}
+            position={[dog.position.x, dog.position.y, dog.position.z]} 
+            rotation={dog.rotation} 
+            hp={dog.hp}
+            maxHp={dog.maxHp}
+            state={dog.state}
+          />
       ))}
       <RiverMesh />
     </group>

@@ -12,6 +12,10 @@ export const SocketManager = () => {
   const addPlayer = useStore((state) => state.addPlayer);
   const removePlayer = useStore((state) => state.removePlayer);
   const updatePlayerPosition = useStore((state) => state.updatePlayerPosition);
+  const setDogs = useStore((state) => state.setDogs);
+  const updateDog = useStore((state) => state.updateDog);
+  const updateDogs = useStore((state) => state.updateDogs);
+  const removeDog = useStore((state) => state.removeDog);
 
   useEffect(() => {
     function onConnect() {
@@ -24,6 +28,10 @@ export const SocketManager = () => {
 
     function onCurrentPlayers(players) {
       setPlayers(players);
+    }
+
+    function onCurrentDogs(dogs) {
+        setDogs(dogs);
     }
 
     function onNewPlayer(player) {
@@ -45,13 +53,47 @@ export const SocketManager = () => {
         soundManager.playChatSound();
     }
 
+    function onDogUpdate(dog) {
+        updateDog(dog);
+    }
+
+    function onDogsMoved(dogs) {
+        updateDogs(dogs);
+    }
+
+    function onDogKilled(id) {
+        removeDog(id);
+    }
+
+    function onDogBark() {
+        soundManager.playBarkSound();
+    }
+
+    function onPlayerUpdate(player) {
+        useStore.getState().updatePlayer(player);
+    }
+    
+    function onPlayerRespawn(player) {
+         useStore.getState().updatePlayer(player);
+         useStore.getState().updatePlayerPosition(player.id, player.position);
+         // Optionally reset local movement state in Experience component if needed, 
+         // but position update should handle the visual jump.
+    }
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('currentPlayers', onCurrentPlayers);
+    socket.on('currentDogs', onCurrentDogs);
     socket.on('newPlayer', onNewPlayer);
     socket.on('playerMoved', onPlayerMoved);
     socket.on('playerDisconnected', onPlayerDisconnected);
     socket.on('chatMessage', onChatMessage);
+    socket.on('dogUpdate', onDogUpdate);
+    socket.on('dogsMoved', onDogsMoved);
+    socket.on('dogKilled', onDogKilled);
+    socket.on('dogBark', onDogBark);
+    socket.on('playerUpdate', onPlayerUpdate);
+    socket.on('playerRespawn', onPlayerRespawn);
 
     return () => {
       socket.off('connect', onConnect);

@@ -74,7 +74,7 @@ export const IsometricCamera = () => {
         // Adjust decay: 5 is slow/smooth, 15 is snappy. Let's try 10.
         const smoothing = 1 - Math.exp(-10 * delta); 
         
-        cameraRef.current.position.lerp(targetPos, smoothing);
+        cameraRef.current.position.lerp(targetPos, 0);
         cameraRef.current.lookAt(playerPos[0], playerPos[1], playerPos[2]);
     });
 

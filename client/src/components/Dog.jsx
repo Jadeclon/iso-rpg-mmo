@@ -1,8 +1,10 @@
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Vector3, Quaternion, Matrix4 } from 'three';
+import { Html } from '@react-three/drei';
+import { socket } from './SocketManager';
 
-export const Dog = ({ position, rotation = [0, 0, 0] }) => {
+export const Dog = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 100, state = 'idle' }) => {
   const group = useRef();
   const head = useRef();
   const tail = useRef();
@@ -11,45 +13,50 @@ export const Dog = ({ position, rotation = [0, 0, 0] }) => {
   const leftLegB = useRef();
   const rightLegB = useRef();
   
-  // State for behavior
+  // State for behavior - Server overrides this for Angry/Idle, but local animation still needed
   const behavior = useRef('idle'); // idle, walk, eat
-  const nextChange = useRef(0);
-  const targetPos = useRef(new Vector3(...position));
-  const homePos = useMemo(() => new Vector3(...position), []);
-  const currentPos = useRef(new Vector3(...position));
   
+  // For smoothing server updates
+  const targetPos = useRef(new Vector3(...position));
+  
+  useEffect(() => {
+    targetPos.current.set(position[0], position[1], position[2]);
+  }, [position]);
+
   // Random offset for animations so they don't all sync up
   const offset = useMemo(() => Math.random() * 100, []);
+
+  // Handle click to attack
+  const handleClick = (e) => {
+    e.stopPropagation();
+    socket.emit('attackDog', id);
+  };
   
-  useFrame((state, delta) => {
-      const now = state.clock.getElapsedTime();
-      
-      // State Machine
-      if (now > nextChange.current) {
-          const r = Math.random();
-          if (r < 0.3) {
-              behavior.current = 'eat';
-              nextChange.current = now + 2 + Math.random() * 3;
-          } else if (r < 0.6) {
-              behavior.current = 'walk';
-              // Pick random spot near home
-              const angle = Math.random() * Math.PI * 2;
-              const rad = Math.random() * 8; // Wandering radius
-              targetPos.current.set(
-                  homePos.x + Math.sin(angle) * rad,
-                  position[1],
-                  homePos.z + Math.cos(angle) * rad
-              );
-              nextChange.current = now + 3 + Math.random() * 3;
-          } else {
-              behavior.current = 'idle';
-              nextChange.current = now + 2 + Math.random() * 4;
-          }
-      }
-      
-      // Behaviors
+  useFrame((stateCtx, delta) => {
+      const now = stateCtx.clock.getElapsedTime();
       const t = now + offset;
       
+      // Interpolate position from server
+      if (group.current) {
+         // Use a fixed factor for consistent speed regardless of framerate, 
+         // but since lerp alpha is 0-1, using delta * factor makes it framerate INDEPENDENT regarding speed/time.
+         // delta * 10 means it covers distance in ~0.1s.
+         group.current.position.lerp(targetPos.current, delta * 10); 
+         
+         group.current.rotation.y = rotation[1]; 
+         
+         // Logic: If server says ANGRY, we are likely moving/chasing -> WALK
+         // OR if we are far from target -> WALK
+         const dist = group.current.position.distanceTo(targetPos.current);
+         
+         if (state === 'angry' || dist > 0.05) {
+             behavior.current = 'walk';
+         } else {
+             behavior.current = 'idle'; 
+         }
+      }
+
+      // Behaviors Animation
       if (behavior.current === 'eat') {
           // Head down
           head.current.rotation.x = 0.5 + Math.sin(t * 10) * 0.1; // Bobbing while eating
@@ -61,33 +68,30 @@ export const Dog = ({ position, rotation = [0, 0, 0] }) => {
           rightLegB.current.rotation.x = 0;
           
       } else if (behavior.current === 'walk') {
-          // Move
-          const direction = targetPos.current.clone().sub(group.current.position);
-          direction.y = 0;
-          if (direction.length() > 0.1) {
-              direction.normalize();
-              // Move
-              group.current.position.add(direction.multiplyScalar(delta * 1.5)); // Speed 1.5
-              // Rotate to face
-              const angle = Math.atan2(direction.x, direction.z);
-              // Smooth rotation could be nice but instant is okay for now or simple lerp
-              group.current.rotation.y = angle;
-          } else {
-              // Reached target, switch to idle early
-              behavior.current = 'idle';
-          }
-          
           // Head up
           head.current.rotation.x = Math.sin(t * 0.3) * 0.1;
 
-          // Leg animation
-          leftLegF.current.rotation.x = Math.sin(t * 12) * 0.5;
-          rightLegF.current.rotation.x = Math.sin(t * 12 + Math.PI) * 0.5;
-          leftLegB.current.rotation.x = Math.sin(t * 12 + Math.PI) * 0.5;
-          rightLegB.current.rotation.x = Math.sin(t * 12) * 0.5;
+          // Leg animation - Faster stride
+          const speedFactor = 20; 
+          leftLegF.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
+          rightLegF.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
+          leftLegB.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
+          rightLegB.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
           
+          // Body Dynamic
+          // Bobbing
+          group.current.position.y = position[1] + Math.abs(Math.sin(t * speedFactor)) * 0.05;
+          // Tilt forward
+          group.current.rotation.x = 0.1;
+
       } else {
           // IDLE
+          // Reset tilt and height
+          group.current.rotation.x = 0;
+          if (Math.abs(group.current.position.y - position[1]) > 0.001) {
+              group.current.position.y = position[1]; // Snap back or lerp
+          }
+          
           // Head look around
           head.current.rotation.y = Math.sin(t * 0.5) * 0.3;
           head.current.rotation.x = Math.sin(t * 0.3) * 0.05;
@@ -102,20 +106,21 @@ export const Dog = ({ position, rotation = [0, 0, 0] }) => {
       // Tail wag (always wag a bit, more when happy/eating?)
       const wagSpeed = behavior.current === 'eat' ? 15 : 8;
       tail.current.rotation.z = Math.sin(t * wagSpeed) * 0.5;
-      
-      // Breathing body
-      // group.current.position.y is controlled by walk? 
-      // Walk stays on ground (y=0 or whatever). 
-      // Breathing changes Y scale or position? position Y is tricky if walking.
-      // Let's just slight Y offset relative to ground?
-      // Actually group.position is absolute world. 
-      // Let's leave Y alone or simple wobble if idle.
   });
 
   const coatColor = "#8B4513"; // SaddleBrown
+  const showHealth = hp < maxHp && hp > 0;
 
   return (
-    <group ref={group} position={position} rotation={rotation}>
+    <group ref={group} position={position} rotation={rotation} onClick={handleClick}>
+      <Html position={[0, 1.2, 0]} center>
+          {showHealth && (
+              <div style={{ width: '50px', height: '6px', background: 'red', border: '1px solid black' }}>
+                  <div style={{ width: `${(hp/maxHp)*100}%`, height: '100%', background: 'lime' }} />
+              </div>
+          )}
+      </Html>
+
       {/* Body */}
       <mesh position={[0, 0.4, 0]} castShadow>
         <boxGeometry args={[0.3, 0.3, 0.5]} />

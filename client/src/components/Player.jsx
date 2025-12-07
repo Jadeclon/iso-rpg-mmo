@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Vector3 } from 'three';
-import { Text, Billboard } from '@react-three/drei';
+import { Text, Billboard, Html } from '@react-three/drei';
 import { soundManager } from '../SoundManager';
 import { useStore } from '../store';
 
@@ -145,7 +145,7 @@ const CharacterModel = ({ color, isMoving, skin, lastAttack }) => {
 
 
 
-export const Player = ({ position, color, skin, lastAttack, isLocal = false }) => {
+export const Player = ({ position, color, skin, lastAttack, isLocal = false, hp = 100, maxHp = 100 }) => {
   const ref = useRef();
   const [isMoving, setIsMoving] = useState(false);
   
@@ -169,8 +169,19 @@ export const Player = ({ position, color, skin, lastAttack, isLocal = false }) =
     }
   });
 
+  const showHealth = hp < maxHp && hp > 0;
+
   return (
     <group ref={ref}>
+      {/* HP Bar */}
+      {(showHealth || isLocal) && ( // Always show own health or if damaged
+        <Html position={[0, 2.3, 0]} center>
+            <div style={{ width: '60px', height: '6px', background: 'red', border: '1px solid black' }}>
+                <div style={{ width: `${(hp/maxHp)*100}%`, height: '100%', background: 'lime' }} />
+            </div>
+        </Html>
+      )}
+
       <CharacterModel color={color} isMoving={isMoving} skin={skin} lastAttack={lastAttack} />
       {/* Name Tag */}
       <Billboard position={[0, 2.0, 0]}>

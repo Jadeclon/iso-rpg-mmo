@@ -107,6 +107,8 @@ export const Experience = () => {
             color={player.color} 
             skin={player.skin}
             lastAttack={player.lastAttack}
+            hp={player.hp}
+            maxHp={player.maxHp}
             isLocal={player.id === myId} 
         />
       ))}
