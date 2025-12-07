@@ -78,25 +78,25 @@ export const Trader = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 1
                group.current.position.y = position[1] || 0; 
            }
            
-          //  if (wanderTarget) {
-          //   // Leg animation - Faster stride
-          //   const speedFactor = 5; 
-          //   leftLeg.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
-          //   rightLeg.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
-          //   leftArm.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
-          //   rightArm.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
+           if (wanderTarget) {
+            // Leg animation - Faster stride
+            const speedFactor = 5; 
+            leftLeg.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
+            rightLeg.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
+            leftArm.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
+            rightArm.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
 
-          //     worldTarget.set(wanderTarget.x, group.current.position.y, wanderTarget.z);
-          //     const dist = group.current.position.distanceTo(worldTarget);
+              worldTarget.set(wanderTarget.x, group.current.position.y, wanderTarget.z);
+              const dist = group.current.position.distanceTo(worldTarget);
 
-          //     if(dist < 0.2) {
-          //         //Legs still
-          //         leftLeg.current.rotation.x = 0;
-          //         rightLeg.current.rotation.x = 0;
-          //         leftArm.current.rotation.x = 0;
-          //         rightArm.current.rotation.x = 0;
-          //     }
-          // }
+              if(dist < 0.2) {
+                  //Legs still
+                  leftLeg.current.rotation.x = 0;
+                  rightLeg.current.rotation.x = 0;
+                  leftArm.current.rotation.x = 0;
+                  rightArm.current.rotation.x = 0;
+              }
+          }
       }
 
       // Unique Trader Feature: UI Distance Check

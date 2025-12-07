@@ -102,25 +102,25 @@ export const Dog = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 100,
           head.current.rotation.x = Math.sin(t * 0.3) * 0.05;
           
           
-          // if (wanderTarget) {
-          //   // Leg animation - Faster stride
-          //   const speedFactor = 5; 
-          //   leftLegF.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
-          //   rightLegF.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
-          //   leftLegB.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
-          //   rightLegB.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
+          if (wanderTarget) {
+            // Leg animation - Faster stride
+            const speedFactor = 5; 
+            leftLegF.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
+            rightLegF.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
+            leftLegB.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
+            rightLegB.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
 
-          //     worldTarget.set(wanderTarget.x, group.current.position.y, wanderTarget.z);
-          //     const dist = group.current.position.distanceTo(worldTarget);
+              worldTarget.set(wanderTarget.x, group.current.position.y, wanderTarget.z);
+              const dist = group.current.position.distanceTo(worldTarget);
               
-          //     if(dist < 0.2) {
-          //         //Legs still
-          //         leftLegF.current.rotation.x = 0;
-          //         rightLegF.current.rotation.x = 0;
-          //         leftLegB.current.rotation.x = 0;
-          //         rightLegB.current.rotation.x = 0;
-          //     }
-          // }
+              if(dist < 0.2) {
+                  //Legs still
+                  leftLegF.current.rotation.x = 0;
+                  rightLegF.current.rotation.x = 0;
+                  leftLegB.current.rotation.x = 0;
+                  rightLegB.current.rotation.x = 0;
+              }
+          }
       }
 
       // Tail wag (always wag a bit, more when happy/eating?)
