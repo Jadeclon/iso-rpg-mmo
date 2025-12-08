@@ -10,6 +10,7 @@ import { Vector3 } from 'three';
 
 import { LEVEL_DATA } from '../levelData';
 import { ItemDrops } from './ItemDrops';
+import itemsDef from '../items.json';
 
 export const Experience = () => {
   const players = useStore((state) => state.players);
@@ -18,6 +19,13 @@ export const Experience = () => {
 
   // Input handling
   const [movement, setMovement] = useState({ x: 0, z: 0 });
+  
+  // Jump state (using ref for performance in useFrame)
+  const jumpState = useRef({
+    isJumping: false,
+    velocityY: 0,
+    currentY: 0
+  });
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -25,9 +33,24 @@ export const Experience = () => {
       if (e.code === 'Space') {
           const currentPlayers = useStore.getState().players;
           const myId = socket.id;
-          if (currentPlayers[myId] && currentPlayers[myId].skin === 'warrior') {
-              socket.emit('playerAttack');
-              useStore.getState().setPlayerAttacking(myId);
+          const player = currentPlayers[myId];
+          
+          if (player) {
+              const rightHandItem = player.equipment?.rightHand;
+              const itemDef = itemsDef.find(i => i.id === rightHandItem);
+              const hasWeapon = itemDef?.type === 'weapon';
+              
+              if (player.skin === 'warrior' || hasWeapon) {
+                  socket.emit('playerAttack');
+                  useStore.getState().setPlayerAttacking(myId);
+              }
+          }
+      }
+      // Jump on Shift press
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+          if (!jumpState.current.isJumping) {
+              jumpState.current.isJumping = true;
+              jumpState.current.velocityY = 8; // Initial jump velocity
           }
       }
       switch (e.key.toLowerCase()) {
@@ -66,6 +89,20 @@ export const Experience = () => {
           const dz = position[2] - rock.position[2];
           const dist = Math.sqrt(dx*dx + dz*dz);
           if (dist < rock.radius + 0.5) return true;
+      }
+      // House collision (rectangular bounding box)
+      const house = LEVEL_DATA.house;
+      if (house) {
+          const playerRadius = 0.5;
+          const hx = house.position[0];
+          const hz = house.position[2];
+          const halfW = house.width / 2 + playerRadius;
+          const halfD = house.depth / 2 + playerRadius;
+          
+          if (position[0] > hx - halfW && position[0] < hx + halfW &&
+              position[2] > hz - halfD && position[2] < hz + halfD) {
+              return true;
+          }
       }
       return false; 
   };
@@ -132,16 +169,49 @@ export const Experience = () => {
 
         const newPos = [nextX, currentPos[1], nextZ];
         
-        // Optimistic update
+        // Optimistic update (Local)
         useStore.getState().updatePlayerPosition(myId, newPos);
-        socket.emit('playerMove', newPos);
+
+        // Network update (Throttled)
+        const now = Date.now();
+        if (!state.lastSocketEmit || now - state.lastSocketEmit > 50) { // 20Hz (50ms)
+             socket.emit('playerMove', newPos);
+             state.lastSocketEmit = now;
+        }
 
         // Step Sounds
-        const now = Date.now();
+        // const now = Date.now(); // reuse 'now' from above
         if (!state.lastStepTime || now - state.lastStepTime > 350) { // 350ms between steps
             const inRiver = isPositionInRiver(newPos[0], newPos[2]);
             soundManager.playStepSound(inRiver);
             state.lastStepTime = now;
+        }
+    }
+    
+    // Handle jumping physics (runs every frame regardless of movement)
+    const jump = jumpState.current;
+    if (jump.isJumping || jump.currentY > 0) {
+        const gravity = 25; // Gravity strength
+        jump.velocityY -= gravity * delta;
+        jump.currentY += jump.velocityY * delta;
+        
+        // Ground check
+        if (jump.currentY <= 0) {
+            jump.currentY = 0;
+            jump.velocityY = 0;
+            jump.isJumping = false;
+        }
+        
+        // Update player Y position
+        const currentPos = players[myId].position;
+        const newPos = [currentPos[0], jump.currentY, currentPos[2]];
+        useStore.getState().updatePlayerPosition(myId, newPos);
+        
+        // Network update for jump position
+        const now = Date.now();
+        if (!jumpState.current.lastEmit || now - jumpState.current.lastEmit > 50) {
+            socket.emit('playerMove', newPos);
+            jumpState.current.lastEmit = now;
         }
     }
   });
@@ -168,6 +238,7 @@ export const Experience = () => {
             lastAttack={player.lastAttack}
             hp={player.hp}
             maxHp={player.maxHp}
+            equipment={player.equipment}
             isLocal={player.id === myId} 
         />
       ))}

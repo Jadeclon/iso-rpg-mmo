@@ -1,8 +1,13 @@
 [
-  { "id": "bone", "name": "Bone", "image": "🦴", "dropRate": 0.5 },
-  { "id": "meat", "name": "Meat", "image": "🥩", "dropRate": 0.1 },
-  { "id": "gold", "name": "Gold", "image": "💰", "dropRate": 0.9 },
-  { "id": "health_potion", "name": "Health Potion", "image": "🧪", "dropRate": 0.05 },
-  { "id": "sword_iron", "name": "Iron Sword", "image": "🗡️", "dropRate": 0.001 },
-  { "id": "shield_wood", "name": "Wood Shield", "image": "🛡️", "dropRate": 0.004 }
+  { "id": "bone", "name": "Bone", "image": "🦴" },
+  { "id": "meat", "name": "Meat", "image": "🥩" },
+  { "id": "gold", "name": "Gold", "image": "💰" },
+  { "id": "health_potion", "name": "Health Potion", "image": "🧪" },
+  { "id": "sword_iron", "name": "Iron Sword", "image": "🗡️", "type": "weapon", "visuals": { "bladeColor": "#e0e0e0", "hiltColor": "#4a3c31", "bladeLength": 1.1 } },
+  { "id": "shield_wood", "name": "Wood Shield", "image": "🛡️", "type": "shield", "defense": 5 },
+  { "id": "campfire", "name": "Campfire", "image": "🔥" },
+  { "id": "cooked_meat", "name": "Cooked Meat", "image": "🍖" },
+  { "id": "sword_wood", "name": "Wood Sword", "image": "🗡️", "type": "weapon", "visuals": { "bladeColor": "#deb887", "hiltColor": "#8b5a2b", "bladeLength": 1.1 } },
+  { "id": "sword_long", "name": "Long Sword", "image": "textures/items/weapons/longsword.png", "type": "weapon", "visuals": { "bladeColor": "#b0c4de", "hiltColor": "#4a3c31", "bladeLength": 1.4 } },
+  { "id": "sword_broad", "name": "Broadsword", "image": "textures/items/weapons/broadsword.png", "type": "weapon", "visuals": { "bladeColor": "#708090", "hiltColor": "#000000", "bladeLength": 1.3, "bladeWidth": 0.3 } }
 ]

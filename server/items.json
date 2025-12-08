@@ -1,0 +1,12 @@
+[
+  { "id": "bone", "name": "Bone" },
+  { "id": "meat", "name": "Meat" },
+  { "id": "gold", "name": "Gold" },
+  { "id": "health_potion", "name": "Health Potion" },
+  { "id": "shield_wood", "name": "Wood Shield", "type": "shield", "defense": 5 },
+  { "id": "campfire", "name": "Campfire" },
+  { "id": "cooked_meat", "name": "Cooked Meat" },
+  { "id": "sword_wood", "name": "Wood Sword", "type": "weapon", "damage": 10 },
+  { "id": "sword_long", "name": "Long Sword", "type": "weapon", "damage": 30 },
+  { "id": "sword_broad", "name": "Broadsword", "type": "weapon", "damage": 35 }
+]

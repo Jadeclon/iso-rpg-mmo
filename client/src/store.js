@@ -4,6 +4,7 @@ export const useStore = create((set) => ({
   players: {},
   dogs: {},
   bears: {},
+  campfires: {},
   items: {},
   inventory: [], // Added inventory array
   isInventoryOpen: false, // UI Toggle
@@ -12,6 +13,8 @@ export const useStore = create((set) => ({
   isNight: false,
   trader: null,
   isTraderOpen: false,
+  shopConfig: [],
+  setShopConfig: (config) => set({ shopConfig: config }),
   setPlayers: (players) => set({ players }),
   setDogs: (dogs) => set({ dogs }),
   updateDog: (dog) => set((state) => ({ dogs: { ...state.dogs, [dog.id]: dog } })),
@@ -29,6 +32,11 @@ export const useStore = create((set) => ({
       delete newBears[id];
       return { bears: newBears };
   }),
+  setCampfires: (campfires) => set({ campfires }),
+  addCampfire: (campfire) => set((state) => ({ campfires: { ...state.campfires, [campfire.id]: campfire } })),
+  itemsDef: [],
+  setItemsDef: (itemsDef) => set({ itemsDef }),
+  items: {},
   setItems: (items) => set({ items }),
   addItem: (item) => set((state) => ({ items: { ...state.items, [item.id]: item } })),
   removeItem: (id) => set((state) => {
@@ -46,6 +54,7 @@ export const useStore = create((set) => ({
       }
       return { inventory: [...state.inventory, { ...newItem, count: 1 }] };
   }),
+  setInventory: (inventory) => set({ inventory }),
   removeFromInventory: (itemId) => set((state) => {
       const existingItemIndex = state.inventory.findIndex(item => item.itemId === itemId);
       if (existingItemIndex === -1) return {};

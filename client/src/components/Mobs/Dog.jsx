@@ -2,7 +2,7 @@ import { useRef, useState, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Vector3, Quaternion, Matrix4 } from 'three';
 import { Html } from '@react-three/drei';
-import { socket } from './SocketManager';
+import { socket } from '../SocketManager';
 
 export const Dog = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 100, state = 'idle', wanderTarget }) => {
   const group = useRef();
@@ -110,16 +110,16 @@ export const Dog = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 100,
             leftLegB.current.rotation.x = Math.sin(t * speedFactor + Math.PI) * 0.6;
             rightLegB.current.rotation.x = Math.sin(t * speedFactor) * 0.6;
 
-              worldTarget.set(wanderTarget.x, group.current.position.y, wanderTarget.z);
-              const dist = group.current.position.distanceTo(worldTarget);
-              
-              if(dist < 0.2) {
-                  //Legs still
-                  leftLegF.current.rotation.x = 0;
-                  rightLegF.current.rotation.x = 0;
-                  leftLegB.current.rotation.x = 0;
-                  rightLegB.current.rotation.x = 0;
-              }
+            worldTarget.set(wanderTarget.x, group.current.position.y, wanderTarget.z);
+            const dist = group.current.position.distanceTo(worldTarget);
+            
+            if(dist < 0.2) {
+                //Legs still
+                leftLegF.current.rotation.x = 0;
+                rightLegF.current.rotation.x = 0;
+                leftLegB.current.rotation.x = 0;
+                rightLegB.current.rotation.x = 0;
+            }
           }
       }
 
@@ -191,7 +191,7 @@ export const Dog = ({ id, position, rotation = [0, 0, 0], hp = 100, maxHp = 100,
         </mesh>
       </group>
       
-      <group position={[0.1, 0.3, -0.2]} ref={rightLegB}>
+      <group position={[-0.1, 0.3, -0.2]} ref={rightLegB}>
         <mesh position={[0, -0.15, 0]} castShadow>
             <boxGeometry args={[0.08, 0.3, 0.08]} />
             <meshStandardMaterial color={coatColor} />

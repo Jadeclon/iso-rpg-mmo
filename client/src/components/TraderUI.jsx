@@ -1,20 +1,47 @@
 import { socket } from './SocketManager';
 import { useStore } from '../store';
 import { soundManager } from '../SoundManager';
+import { useEffect } from 'react';
+import itemsDef from '../items.json';
 
 export const TraderUI = () => {
     const isTraderOpen = useStore((state) => state.isTraderOpen);
+    const toggleTrader = useStore((state) => state.toggleTrader);
     const trader = useStore((state) => state.trader);
+    const players = useStore((state) => state.players);
     const inventory = useStore((state) => state.inventory);
     const removeFromInventory = useStore((state) => state.removeFromInventory);
+    const shopConfig = useStore((state) => state.shopConfig);
     
-    // Default shop items (hardcoded for now as server just sends strings)
-    // Ideally server sends full item definitions or IDs that map to itemsDef
-    const shopItems = [
-        { id: 'health_potion', name: 'Health Potion', price: 50, icon: '🧪' },
-        { id: 'sword_iron', name: 'Iron Sword', price: 100, icon: '🗡️' },
-        { id: 'shield_wood', name: 'Wood Shield', price: 75, icon: '🛡️' }
-    ];
+    // Generate Items
+    const shopItems = shopConfig.map(entry => {
+        const def = itemsDef.find(i => i.id === entry.id);
+        return {
+            id: entry.id,
+            name: def ? def.name : entry.id,
+            price: entry.price,
+            icon: def ? def.image : '?'
+        };
+    });
+    
+    // Auto-Close Logic
+    useEffect(() => {
+        if (!isTraderOpen || !trader) return;
+        
+        const checkDistance = setInterval(() => {
+             const player = players[socket.id];
+             if (player && trader) {
+                 const dx = player.position[0] - trader.position.x;
+                 const dz = player.position[2] - trader.position.z;
+                 const dist = Math.sqrt(dx*dx + dz*dz);
+                 if (dist > 3) { // Threshold
+                     toggleTrader();
+                 }
+             }
+        }, 500);
+        
+        return () => clearInterval(checkDistance);
+    }, [isTraderOpen, trader, players, toggleTrader]);
 
     const handleBuy = (item) => {
         const goldItem = inventory.find(i => i.itemId === 'gold');
@@ -27,7 +54,7 @@ export const TraderUI = () => {
             }
             
             // Emit Trade
-            socket.emit('trade', { itemId: item.id, cost: item.price });
+            socket.emit('trade', { itemId: item.id });
             soundManager.playTradeSuccess();
         } else {
             // alert("Not enough Gold! Go kill some dogs.");
@@ -73,7 +100,13 @@ export const TraderUI = () => {
                         borderRadius: '5px'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '24px' }}>{item.icon}</span>
+                            <span style={{ fontSize: '24px', display: 'flex', alignItems: 'center' }}>
+                                {(item.image?.includes('/') || item.image?.includes('.')) ? (
+                                    <img src={item.image} alt={item.name} style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+                                ) : (
+                                    item.icon
+                                )}
+                            </span>
                             <div>
                                 <div style={{ fontWeight: 'bold' }}>{item.name}</div>
                                 <div style={{ fontSize: '12px', color: '#aaa' }}>{item.desc || 'A mysterious item.'}</div>

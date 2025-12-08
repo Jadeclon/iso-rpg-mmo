@@ -345,6 +345,26 @@ class SoundManager {
             this.playBuffer(this.yelpBuffer);
         }
     }
+
+    playBearRoar() {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        if (!this.roarBuffer) {
+            fetch('/sounds/mobs/bear_roar.m4a')
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
+                .then(audioBuffer => {
+                    this.roarBuffer = audioBuffer;
+                    // Lower pitch slightly for bigger bear effect? 
+                    // Or just play as is.
+                    this.playBuffer(this.roarBuffer);
+                })
+                .catch(e => console.error("Error loading bear roar", e));
+        } else {
+            this.playBuffer(this.roarBuffer);
+        }
+    }
 }
 
 export const soundManager = new SoundManager();

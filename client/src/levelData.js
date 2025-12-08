@@ -2,7 +2,13 @@ export const LEVEL_DATA = {
   trees: [],
   rocks: [],
   dogs: [],
-  riverPoints: []
+  riverPoints: [],
+  house: {
+    position: [-35, 0, 25],
+    // Rectangular collision box (half-extents from center)
+    width: 7,   // X direction (includes tower)
+    depth: 9    // Z direction (includes porch)
+  }
 };
 
 // Generate deterministic random data (simple seeded-like approach)

@@ -66,6 +66,21 @@ export const Minimap = () => {
             }
             ctx.stroke();
 
+            // House
+            const houseX = (-35 + MAP_SIZE/2) * SCALE;
+            const houseY = (25 + MAP_SIZE/2) * SCALE;
+            // Draw house icon (square with roof)
+            ctx.fillStyle = '#8b4513'; // Brown
+            ctx.fillRect(houseX - 5, houseY - 3, 10, 8);
+            // Roof triangle
+            ctx.fillStyle = '#5d4037';
+            ctx.beginPath();
+            ctx.moveTo(houseX - 6, houseY - 3);
+            ctx.lineTo(houseX, houseY - 8);
+            ctx.lineTo(houseX + 6, houseY - 3);
+            ctx.closePath();
+            ctx.fill();
+
             // Trader
             if (trader) {
                 const x = (trader.position.x + MAP_SIZE/2) * SCALE;

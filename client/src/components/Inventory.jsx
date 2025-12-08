@@ -8,6 +8,8 @@ export const Inventory = () => {
     const isInventoryOpen = useStore((state) => state.isInventoryOpen);
     const inventory = useStore((state) => state.inventory);
     const removeFromInventory = useStore((state) => state.removeFromInventory);
+    const serverItemsDef = useStore((state) => state.itemsDef);
+    const [hoveredItem, setHoveredItem] = useState(null);
     
     // Default position: Right-Center
     const [position, setPosition] = useState({ x: window.innerWidth - 450, y: window.innerHeight / 2 - 150 });
@@ -38,14 +40,42 @@ export const Inventory = () => {
 
     const handleAction = (action) => {
         if (!contextMenu) return;
-        const width = 400; // inventory width
+        
         const item = contextMenu.item;
         
         if (action === 'use') {
             if (item.itemId === 'health_potion') {
                 socket.emit('useItem', item.itemId);
-                removeFromInventory(item.itemId); // Reduce count
+                removeFromInventory(item.itemId);
+            } else if (item.itemId === 'campfire') {
+                socket.emit('useItem', item.itemId);
+                removeFromInventory(item.itemId);
+            } else if (item.itemId === 'meat') {
+                 // Check for nearby campfire
+                 const campfires = useStore.getState().campfires;
+                 const player = useStore.getState().players[socket.id];
+                 let nearFire = false;
+                 
+                 if (player) {
+                     Object.values(campfires).forEach(fire => {
+                         const dx = fire.position.x - player.position[0];
+                         const dz = fire.position.z - player.position[2];
+                         const dist = Math.sqrt(dx*dx + dz*dz);
+                         if (dist < 2.0) nearFire = true;
+                     });
+                 }
+                 
+                 if (nearFire) {
+                     socket.emit('useItem', item.itemId);
+                     removeFromInventory(item.itemId); 
+                 }
+            } else if (item.itemId === 'cooked_meat') {
+                 socket.emit('useItem', item.itemId);
+                 removeFromInventory(item.itemId);
             }
+        } else if (action === 'equip') {
+             removeFromInventory(item.itemId);
+             socket.emit('equipItem', item.itemId);
         } else if (action === 'throw') {
              removeFromInventory(item.itemId); // Local remove
              socket.emit('dropItem', item.itemId); // Sync with server
@@ -142,8 +172,18 @@ export const Inventory = () => {
                                 fontSize: '30px',
                                 cursor: 'help', // Context menu hint
                                 position: 'relative'
-                            }} title={def ? def.name : 'Unknown'}>
-                                {def ? def.image : '?'}
+                            }} 
+                            onMouseEnter={(e) => {
+                                const serverDef = serverItemsDef.find(d => d.id === item.itemId);
+                                setHoveredItem({ ...def, ...serverDef, count: item.count });
+                            }}
+                            onMouseLeave={() => setHoveredItem(null)}
+                            >
+                                {def && (def.image.includes('/') || def.image.includes('.')) ? (
+                                    <img src={def.image} alt={def.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+                                ) : (
+                                   def ? def.image : '?'
+                                )}
                                 {item.count > 1 && (
                                     <div style={{
                                         position: 'absolute',
@@ -176,6 +216,44 @@ export const Inventory = () => {
                     Right-click items for actions.
                 </div>
             </div>
+
+            {/* Tooltip */}
+            {hoveredItem && (
+                <div style={{
+                    position: 'absolute',
+                    left: `${position.x + 420}px`,
+                    top: `${position.y}px`,
+                    width: '200px',
+                    background: 'rgba(0, 0, 0, 0.9)',
+                    border: '1px solid #FFD700',
+                    borderRadius: '8px',
+                    padding: '15px',
+                    color: 'white',
+                    zIndex: 1100,
+                    pointerEvents: 'none'
+                }}>
+                    <div style={{ color: '#FFD700', fontWeight: 'bold', borderBottom: '1px solid #555', paddingBottom: '5px', marginBottom: '5px' }}>
+                        {hoveredItem.name}
+                    </div>
+                    {hoveredItem.type === 'weapon' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ff5555' }}>
+                            <span>Damage:</span>
+                            <span>{hoveredItem.damage || '?'}</span>
+                        </div>
+                    )}
+                    {hoveredItem.type === 'shield' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#55ffff' }}>
+                            <span>Defense:</span>
+                            <span>{hoveredItem.defense || '?'}</span>
+                        </div>
+                    )}
+                     {hoveredItem.itemId === 'health_potion' && (
+                        <div style={{ color: '#55ff55', fontSize: '12px' }}>
+                            Restores 50 HP
+                        </div>
+                    )}
+                </div>
+            )}
             
             {/* Context Menu */}
             {contextMenu && (
@@ -198,6 +276,22 @@ export const Inventory = () => {
                             style={{ padding: '8px 12px', cursor: 'pointer', color: 'lime', borderBottom: '1px solid #444' }}
                          >
                             Use
+                         </div>
+                    )}
+                    {(contextMenu.item.itemId === 'campfire' || contextMenu.item.itemId === 'meat' || contextMenu.item.itemId === 'cooked_meat') && (
+                         <div 
+                            onClick={() => handleAction('use')}
+                            style={{ padding: '8px 12px', cursor: 'pointer', color: 'orange', borderBottom: '1px solid #444' }}
+                         >
+                            {contextMenu.item.itemId === 'campfire' ? 'Place' : contextMenu.item.itemId === 'meat' ? 'Cook' : 'Eat'}
+                         </div>
+                    )}
+                    {(contextMenu.item.itemId === 'sword_iron' || contextMenu.item.itemId === 'sword_wood' || contextMenu.item.itemId === 'sword_long') && (
+                         <div 
+                            onClick={() => handleAction('equip')}
+                            style={{ padding: '8px 12px', cursor: 'pointer', color: 'cyan', borderBottom: '1px solid #444' }}
+                         >
+                            Equip
                          </div>
                     )}
                     <div 

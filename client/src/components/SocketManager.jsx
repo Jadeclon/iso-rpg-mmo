@@ -20,11 +20,16 @@ export const SocketManager = () => {
   const addItem = useStore((state) => state.addItem);
   const removeItem = useStore((state) => state.removeItem);
   const addToInventory = useStore((state) => state.addToInventory);
+  const setInventory = useStore((state) => state.setInventory);
   const setBears = useStore((state) => state.setBears);
   const updateBear = useStore((state) => state.updateBear);
   const updateBears = useStore((state) => state.updateBears);
   const removeBear = useStore((state) => state.removeBear);
+  const setCampfires = useStore((state) => state.setCampfires);
+  const addCampfire = useStore((state) => state.addCampfire);
   const setTrader = useStore((state) => state.setTrader);
+  const setShopConfig = useStore((state) => state.setShopConfig);
+  const setItemsDef = useStore((state) => state.setItemsDef);
 
   useEffect(() => {
     function onConnect() {
@@ -38,6 +43,9 @@ export const SocketManager = () => {
 
     function onCurrentPlayers(players) {
         setPlayers(players);
+        if (players[socket.id] && players[socket.id].inventory) {
+            setInventory(players[socket.id].inventory);
+        }
     }
     
     function onCurrentDogs(dogs) {
@@ -46,6 +54,14 @@ export const SocketManager = () => {
 
     function onCurrentBears(bears) {
         setBears(bears);
+    }
+    
+    function onCurrentCampfires(campfires) {
+        setCampfires(campfires);
+    }
+    
+    function onCampfirePlaced(campfire) {
+        addCampfire(campfire);
     }
 
     function onCurrentItems(items) {
@@ -104,7 +120,7 @@ export const SocketManager = () => {
     }
     
     function onInventoryAdd(item) {
-        addToInventory(item);
+        // addToInventory(item); // Rely on setInventory from playerUpdate for data
         soundManager.playPickupSound();
     }
 
@@ -112,9 +128,8 @@ export const SocketManager = () => {
         soundManager.playBarkSound();
     }
 
-    function onBearBark() {
-        // soundManager.playBearRoar(); // TODO: Add roar sound
-        soundManager.playBarkSound(); // Fallback
+    function onBearRoar() {
+        soundManager.playBearRoar();
     }
     
     function onDogDamage(dogId) {
@@ -149,6 +164,9 @@ export const SocketManager = () => {
 
     function onPlayerUpdate(player) {
         useStore.getState().updatePlayer(player);
+        if (player.id === socket.id && player.inventory) {
+             setInventory(player.inventory);
+        }
     }
     
     function onPlayerRespawn(player) {
@@ -156,11 +174,21 @@ export const SocketManager = () => {
          useStore.getState().updatePlayerPosition(player.id, player.position);
     }
 
+    function onShopConfig(config) {
+        setShopConfig(config);
+    }
+
+    function onItemDefinitions(defs) {
+        setItemsDef(defs);
+    }
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('currentPlayers', onCurrentPlayers);
     socket.on('currentDogs', onCurrentDogs);
     socket.on('currentBears', onCurrentBears);
+    socket.on('currentCampfires', onCurrentCampfires);
+    socket.on('campfirePlaced', onCampfirePlaced);
     socket.on('currentItems', onCurrentItems);
     socket.on('newPlayer', onNewPlayer);
     socket.on('playerMoved', onPlayerMoved);
@@ -177,11 +205,13 @@ export const SocketManager = () => {
     socket.on('inventoryAdd', onInventoryAdd);
     socket.on('dogBark', onDogBark);
     socket.on('dogDamage', onDogDamage);
-    socket.on('bearBark', onBearBark);
+    socket.on('bearRoar', onBearRoar);
     socket.on('bearDamage', onBearDamage);
     socket.on('traderUpdate', onTraderUpdate);
     socket.on('playerUpdate', onPlayerUpdate);
     socket.on('playerRespawn', onPlayerRespawn);
+    socket.on('shopConfig', onShopConfig);
+    socket.on('itemDefinitions', onItemDefinitions);
 
     return () => {
       socket.off('connect', onConnect);
@@ -189,6 +219,8 @@ export const SocketManager = () => {
       socket.off('currentPlayers', onCurrentPlayers);
       socket.off('currentDogs', onCurrentDogs);
       socket.off('currentBears', onCurrentBears);
+      socket.off('currentCampfires', onCurrentCampfires);
+      socket.off('campfirePlaced', onCampfirePlaced);
       socket.off('currentItems', onCurrentItems);
       socket.off('newPlayer', onNewPlayer);
       socket.off('playerMoved', onPlayerMoved);
@@ -205,11 +237,13 @@ export const SocketManager = () => {
       socket.off('inventoryAdd', onInventoryAdd);
       socket.off('dogBark', onDogBark);
       socket.off('dogDamage', onDogDamage);
-      socket.off('bearBark', onBearBark);
+      socket.off('bearRoar', onBearRoar);
       socket.off('bearDamage', onBearDamage);
       socket.off('traderUpdate', onTraderUpdate);
       socket.off('playerUpdate', onPlayerUpdate);
       socket.off('playerRespawn', onPlayerRespawn);
+      socket.off('shopConfig', onShopConfig);
+      socket.off('itemDefinitions', onItemDefinitions);
     };
   }, []);
 

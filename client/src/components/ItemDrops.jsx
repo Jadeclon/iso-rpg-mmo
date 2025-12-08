@@ -4,9 +4,11 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const DroppedItem = ({ item }) => {
-    const group = useRef();
-    
+import { useLoader } from '@react-three/fiber';
+import { TextureLoader } from 'three';
+import itemsDef from '../items.json';
+
+const EmojiItem = ({ image }) => {
     const texture = useMemo(() => {
         const canvas = document.createElement('canvas');
         canvas.width = 128;
@@ -15,11 +17,39 @@ const DroppedItem = ({ item }) => {
         ctx.font = '100px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(item.image, 64, 64);
+        ctx.fillText(image, 64, 64);
         const tex = new THREE.CanvasTexture(canvas);
         return tex;
-    }, [item.image]);
+    }, [image]);
     
+    return (
+        <mesh>
+            <planeGeometry args={[0.5, 0.5]} />
+            <meshBasicMaterial map={texture} transparent />
+        </mesh>
+    );
+};
+
+const ImageItem = ({ image }) => {
+    // Note: textures/... is served from public/
+    // We expect item.image to be like "textures/items/weapons/broadsword.png"
+    const texture = useLoader(TextureLoader, image);
+    
+    return (
+         <mesh>
+            <planeGeometry args={[0.5, 0.5]} />
+            <meshBasicMaterial map={texture} transparent />
+        </mesh>
+    );
+}
+
+const DroppedItem = ({ item }) => {
+    const group = useRef();
+    
+    // Resolve image from local def if not provided in item (server refactor)
+    const def = itemsDef.find(d => d.id === item.itemId);
+    const image = item.image || (def ? def.image : '?');
+
     useFrame((state) => {
         if (group.current) {
             // Bobbing animation
@@ -29,13 +59,16 @@ const DroppedItem = ({ item }) => {
         }
     });
 
+    const isImage = image.includes('/') || image.includes('.');
+
     return (
         <group ref={group} position={[item.position.x, 0.5, item.position.z]}>
             <Billboard>
-                <mesh>
-                    <planeGeometry args={[0.5, 0.5]} />
-                    <meshBasicMaterial map={texture} transparent />
-                </mesh>
+                {isImage ? (
+                    <ImageItem image={image} />
+                ) : (
+                    <EmojiItem image={image} />
+                )}
             </Billboard>
         </group>
     );

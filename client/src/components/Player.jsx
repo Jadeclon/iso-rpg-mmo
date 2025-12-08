@@ -4,8 +4,9 @@ import { Vector3 } from 'three';
 import { Text, Billboard, Html } from '@react-three/drei';
 import { soundManager } from '../SoundManager';
 import { useStore } from '../store';
+import itemsDef from '../items.json';
 
-const CharacterModel = ({ color, isMoving, skin, lastAttack }) => {
+const CharacterModel = ({ color, isMoving, skin, lastAttack, equipment }) => {
   const group = useRef();
   const leftLeg = useRef();
   const rightLeg = useRef();
@@ -16,6 +17,7 @@ const CharacterModel = ({ color, isMoving, skin, lastAttack }) => {
   const prevAttack = useRef(0);
 
   useFrame((state) => {
+    // ... (Keep existing animation logic unchanged)
     const time = state.clock.getElapsedTime();
     const now = Date.now();
     const isAttacking = lastAttack && (now - lastAttack < 300);
@@ -31,11 +33,6 @@ const CharacterModel = ({ color, isMoving, skin, lastAttack }) => {
         const progress = (now - lastAttack) / 300; 
         
         // Simple chop: Up slightly, then down hard
-        // 0 -> 1
-        // Start: -45 deg (default idle)
-        // Wind up: -90 deg
-        // Strike: 0 deg
-        
         if (progress < 0.3) {
             // Wind up
              rightArm.current.rotation.x = -Math.PI/3 * (progress / 0.3);
@@ -70,6 +67,19 @@ const CharacterModel = ({ color, isMoving, skin, lastAttack }) => {
   const shirtColor = isWarrior ? '#a0a0a0' : color; // Chainmail for warrior
   const pantsColor = isWarrior ? '#606060' : '#333'; // Greaves for warrior
 
+  // Equipment Logic
+  const rightHandItem = equipment?.rightHand;
+  const itemDef = itemsDef.find(i => i.id === rightHandItem);
+  const visuals = itemDef?.visuals || {};
+
+  const leftHandItem = equipment?.leftHand;
+  const showShield = !!leftHandItem && itemsDef.find(i => i.id === leftHandItem)?.type === 'shield';
+
+  const showSword = !!visuals.bladeColor || (isWarrior && !rightHandItem); // Warrior defaults or if visual exists
+  const bladeColor = visuals.bladeColor || '#e0e0e0';
+  const bladeLength = visuals.bladeLength || 1.1;
+  const hiltColor = visuals.hiltColor || '#4a3c31';
+
   return (
     <group ref={group}>
       {/* Head */}
@@ -98,6 +108,22 @@ const CharacterModel = ({ color, isMoving, skin, lastAttack }) => {
             <boxGeometry args={[0.15, 0.7, 0.15]} />
             <meshStandardMaterial color={shirtColor} />
          </mesh>
+         
+         {showShield && (
+             <group position={[-0.2, -0.3, 0]} rotation={[0, -Math.PI/2, 0]}>
+                 {/* Shield Body */}
+                <mesh castShadow>
+                    <boxGeometry args={[0.1, 0.6, 0.5]} />
+                    <meshStandardMaterial color="#8b4513" />
+                </mesh>
+                {/* Shield Metal Rim */}
+                <mesh position={[0.02, 0, 0]}>
+                    <boxGeometry args={[0.08, 0.5, 0.4]} />
+                    <meshStandardMaterial color="#5a5a5a" />
+                </mesh>
+                {/* Handle/Strap (Visual only) */}
+             </group>
+         )}
       </group>
       <group position={[0.35, 1.1, 0]} ref={rightArm}>
          <mesh position={[0, -0.35, 0]} castShadow>
@@ -105,13 +131,13 @@ const CharacterModel = ({ color, isMoving, skin, lastAttack }) => {
             <meshStandardMaterial color={shirtColor} />
          </mesh>
          
-         {/* Sword (Warrior only) */}
-         {isWarrior && (
+         {/* Sword */}
+         {showSword && (
              <group position={[0, -0.6, 0.2]} rotation={[Math.PI/4, 0, 0]}>
                  {/* Hilt */}
                  <mesh position={[0, 0, 0]} castShadow>
                     <boxGeometry args={[0.1, 0.3, 0.1]} />
-                    <meshStandardMaterial color="#4a3c31" />
+                    <meshStandardMaterial color={hiltColor} />
                  </mesh>
                  {/* Crossguard */}
                  <mesh position={[0, 0.15, 0]} castShadow>
@@ -119,9 +145,9 @@ const CharacterModel = ({ color, isMoving, skin, lastAttack }) => {
                     <meshStandardMaterial color="#c0c0c0" />
                  </mesh>
                  {/* Blade */}
-                 <mesh position={[0, 0.7, 0]} castShadow>
-                    <boxGeometry args={[0.08, 1.1, 0.02]} />
-                    <meshStandardMaterial color="#e0e0e0" />
+                 <mesh position={[0, bladeLength * 0.6, 0]} castShadow>
+                    <boxGeometry args={[0.08, bladeLength, 0.02]} />
+                    <meshStandardMaterial color={bladeColor} />
                  </mesh>
              </group>
          )}
@@ -145,7 +171,7 @@ const CharacterModel = ({ color, isMoving, skin, lastAttack }) => {
 
 
 
-export const Player = ({ position, color, skin, lastAttack, isLocal = false, hp = 100, maxHp = 100 }) => {
+export const Player = ({ position, color, skin, lastAttack, isLocal = false, hp = 100, maxHp = 100, equipment }) => {
   const ref = useRef();
   const [isMoving, setIsMoving] = useState(false);
   
@@ -182,7 +208,7 @@ export const Player = ({ position, color, skin, lastAttack, isLocal = false, hp 
         </Html>
       )}
 
-      <CharacterModel color={color} isMoving={isMoving} skin={skin} lastAttack={lastAttack} />
+      <CharacterModel color={color} isMoving={isMoving} skin={skin} lastAttack={lastAttack} equipment={equipment} />
       {/* Name Tag */}
       <Billboard position={[0, 2.0, 0]}>
         <Text

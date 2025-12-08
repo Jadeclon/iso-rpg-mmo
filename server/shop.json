@@ -1,0 +1,8 @@
+[
+  { "id": "health_potion", "price": 50 },
+  { "id": "sword_iron", "price": 1 },
+  { "id": "shield_wood", "price": 75 },
+  { "id": "campfire", "price": 5 },
+  { "id": "sword_long", "price": 100 },
+  { "id": "sword_broad", "price": 150 }
+]
